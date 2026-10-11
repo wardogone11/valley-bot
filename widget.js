@@ -1,17 +1,20 @@
 /*
  * Valley Smart Services chat box. Add to any website with one line:
  *
- *   <script src="widget.js" data-endpoint="https://hlzmldcebgoeyxmrefcw.supabase.co/functions/v1/web-chat"></script>
+ *   <script src="widget.js" data-business="your-business-id"
+ *     data-endpoint="https://hlzmldcebgoeyxmrefcw.supabase.co/functions/v1/web-chat"></script>
  *
+ * data-business is the id the business was set up with.
  * Optional attributes: data-title (header text), data-color (brand color).
  */
 (function () {
   var script = document.currentScript;
   var ENDPOINT = script.getAttribute("data-endpoint");
+  var BUSINESS = script.getAttribute("data-business");
   var TITLE = script.getAttribute("data-title") || "Valley Smart Services";
   var COLOR = script.getAttribute("data-color") || "#0b6e4f";
   var GREETING = "Hi! How can we help today? / ¡Hola! ¿En qué te podemos ayudar?";
-  var STORE_KEY = "vss-chat";
+  var STORE_KEY = "vss-chat-" + BUSINESS;
 
   // Remember the conversation across page loads, if the browser allows it.
   var state = load() || { sessionId: newId(), messages: [{ from: "bot", text: GREETING }] };
@@ -103,7 +106,7 @@
     fetch(ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId: state.sessionId, message: text }),
+      body: JSON.stringify({ businessId: BUSINESS, sessionId: state.sessionId, message: text }),
     })
       .then(function (r) { return r.json(); })
       .then(function (data) { return data.reply || "Sorry, something went wrong. Please call us. / Disculpa, hubo un problema. Por favor llámanos."; })

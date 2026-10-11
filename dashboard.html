@@ -39,9 +39,10 @@
     .b-emergency { color: var(--red); background: var(--red-bg); }
     .b-person { color: var(--orange); background: var(--orange-bg); }
     .b-ready { color: var(--green); background: var(--green-bg); }
-    .b-chatting, .b-done { color: var(--muted); background: var(--gray-bg); }
+    .b-chatting, .b-done, .b-notfit { color: var(--muted); background: var(--gray-bg); }
     .lead.done { opacity: .7; }
     .actions { padding: 0 16px 14px; }
+    .pick { margin: 0 0 14px; padding: 9px 12px; font: inherit; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
     .actions button { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 8px 14px; font: inherit; font-size: 14px; cursor: pointer; }
     .issue { margin: 6px 0 4px; }
     .meta { color: var(--muted); font-size: 14px; display: flex; gap: 14px; flex-wrap: wrap; }
@@ -68,7 +69,7 @@
     var API = "https://hlzmldcebgoeyxmrefcw.supabase.co/functions/v1/leads";
     var KEY_STORE = "vss-dashboard-key";
     var app = document.getElementById("app");
-    var key = null, leads = [], filter = "all", lastUpdated = null, timer = null;
+    var key = null, leads = [], me = null, filter = "all", business = "all", lastUpdated = null, timer = null;
 
     try { key = localStorage.getItem(KEY_STORE); } catch (e) {}
     key ? refresh() : showLogin();
@@ -107,6 +108,7 @@
     function refresh() {
       call().then(function (data) {
         leads = data.leads;
+        me = data.me;
         lastUpdated = new Date();
         render();
         clearInterval(timer);
@@ -125,25 +127,29 @@
     // then leads ready to schedule, then conversations still going.
     function kind(l) {
       if (l.closed_at) return "done";
+      if (l.not_a_fit && l.status !== "handed_off") return "notfit";
       if (l.status === "handed_off" && l.emergency) return "emergency";
       if (l.status === "handed_off") return "person";
       if (l.status === "complete") return "ready";
       return "chatting";
     }
-    var ORDER = { emergency: 0, person: 1, ready: 2, chatting: 3, done: 4 };
-    var LABEL = { emergency: "EMERGENCY", person: "Wants a person", ready: "Ready to schedule", chatting: "Still chatting", done: "Done" };
+    var ORDER = { emergency: 0, person: 1, ready: 2, chatting: 3, notfit: 4, done: 5 };
+    var LABEL = { emergency: "EMERGENCY", person: "Wants a person", ready: "Ready to schedule", chatting: "Still chatting", notfit: "Not our trade", done: "Done" };
 
     function render() {
       var counts = { needsCall: 0, ready: 0, chatting: 0, done: 0 };
       leads.forEach(function (l) {
+        if (business !== "all" && l.business_id !== business) return;
         var k = kind(l);
         if (k === "emergency" || k === "person") counts.needsCall++;
-        else counts[k]++;
+        else counts[k === "notfit" ? "chatting" : k]++;
       });
 
       var shown = leads.filter(function (l) {
         var k = kind(l);
         if (filter === "needsCall") return k === "emergency" || k === "person";
+        if (filter === "chatting") return k === "chatting" || k === "notfit";
+        if (business !== "all" && l.business_id !== business) return false;
         if (filter === "all") return k !== "done";
         return filter === k;
       }).sort(function (a, b) {
@@ -152,7 +158,10 @@
 
       app.innerHTML = "";
       var header = el("header");
-      header.appendChild(el("h1", null, "Leads"));
+      var titleBox = el("div");
+      titleBox.appendChild(el("h1", null, "Leads"));
+      titleBox.appendChild(el("div", "updated", me.name));
+      header.appendChild(titleBox);
       var right = el("div");
       right.appendChild(el("span", "updated", "Updated " + lastUpdated.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) + " · refreshes every 30s "));
       var out = el("button", "logout", "Log out");
@@ -173,6 +182,19 @@
         stats.appendChild(b);
       });
       app.appendChild(stats);
+
+      if (me.admin) {
+        var names = {};
+        leads.forEach(function (l) { names[l.business_id] = l.business_name; });
+        var pick = el("select", "pick");
+        pick.id = "business-filter";
+        pick.setAttribute("aria-label", "Business");
+        pick.appendChild(new Option("All businesses", "all"));
+        Object.keys(names).sort().forEach(function (id) { pick.appendChild(new Option(names[id], id)); });
+        pick.value = business;
+        pick.onchange = function () { business = pick.value; render(); };
+        app.appendChild(pick);
+      }
 
       if (!shown.length) {
         app.appendChild(el("p", "empty", leads.length ? "Nothing here right now." : "No leads yet. They'll show up here as soon as someone texts or chats."));
@@ -208,6 +230,7 @@
         meta.appendChild(map);
       }
       meta.appendChild(el("span", null, (l.channel === "web" ? "Website chat" : "Text") + " · " + ago(l.updated_at)));
+      if (me.admin) meta.appendChild(el("span", null, l.business_name));
       s.appendChild(meta);
       d.appendChild(s);
 
@@ -215,7 +238,7 @@
       var mark = el("button", null, l.closed_at ? "Undo done" : "Mark done");
       mark.onclick = function () {
         mark.disabled = true;
-        call({ conversationId: l.phone, action: l.closed_at ? "reopen" : "close" })
+        call({ businessId: l.business_id, conversationId: l.phone, action: l.closed_at ? "reopen" : "close" })
           .then(refresh)
           .catch(function () { mark.disabled = false; mark.textContent = "Couldn't save, try again"; });
       };
@@ -226,7 +249,7 @@
         if (!d.open || d.querySelector(".convo")) return;
         var convo = el("div", "convo", "Loading conversation…");
         d.appendChild(convo);
-        call({ conversationId: l.phone }).then(function (data) {
+        call({ businessId: l.business_id, conversationId: l.phone }).then(function (data) {
           convo.textContent = "";
           data.messages.forEach(function (m) { convo.appendChild(el("div", "msg " + m.role, m.content)); });
         }).catch(function () { convo.textContent = "Couldn't load the conversation."; });
