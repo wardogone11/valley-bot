@@ -10,7 +10,7 @@
   var ENDPOINT = script.getAttribute("data-endpoint");
   var TITLE = script.getAttribute("data-title") || "Valley Smart Services";
   var COLOR = script.getAttribute("data-color") || "#0b6e4f";
-  var GREETING = "Hi! How can we help today? / ¡Hola! ¿En qué le podemos ayudar?";
+  var GREETING = "Hi! How can we help today? / ¡Hola! ¿En qué te podemos ayudar?";
   var STORE_KEY = "vss-chat";
 
   // Remember the conversation across page loads, if the browser allows it.
@@ -66,7 +66,7 @@
   log.setAttribute("aria-live", "polite");
   var form = el("form", "vss-form");
   var input = el("input");
-  input.placeholder = "Type a message / Escriba aquí";
+  input.placeholder = "Type a message / Escribe aquí";
   input.maxLength = 1000;
   input.setAttribute("aria-label", "Message");
   var send = el("button");
@@ -106,8 +106,8 @@
       body: JSON.stringify({ sessionId: state.sessionId, message: text }),
     })
       .then(function (r) { return r.json(); })
-      .then(function (data) { return data.reply || "Sorry, something went wrong. Please call us. / Disculpe, hubo un problema. Por favor llámenos."; })
-      .catch(function () { return "We couldn't connect. Please check your internet and try again. / No pudimos conectar. Intente de nuevo."; })
+      .then(function (data) { return data.reply || "Sorry, something went wrong. Please call us. / Disculpa, hubo un problema. Por favor llámanos."; })
+      .catch(function () { return "We couldn't connect. Please check your internet and try again. / No pudimos conectar. Intenta de nuevo."; })
       .then(function (reply) {
         log.removeChild(typing);
         remember("bot", reply);
