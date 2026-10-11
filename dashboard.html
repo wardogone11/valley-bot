@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leads Dashboard</title>
+  <style>
+    :root {
+      --bg: #f4f5f7; --card: #ffffff; --ink: #1d1d1f; --muted: #5f6368; --line: #e3e5e8;
+      --brand: #0b6e4f; --red: #c62828; --red-bg: #fdecea; --orange: #b45309; --orange-bg: #fff4e5;
+      --green: #1b7f3b; --green-bg: #e7f6ec; --gray-bg: #eef0f2;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #121416; --card: #1c1f22; --ink: #eceef0; --muted: #a0a6ad; --line: #2c3035;
+        --brand: #3fb489; --red: #ff6b6b; --red-bg: #3a1d1d; --orange: #f5a524; --orange-bg: #3a2c14;
+        --green: #4cc777; --green-bg: #173323; --gray-bg: #272b30;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .wrap { max-width: 860px; margin: 0 auto; padding: 16px; }
+    header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    h1 { margin: 8px 0; font-size: 26px; }
+    .updated { color: var(--muted); font-size: 14px; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0 16px; }
+    .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; cursor: pointer; text-align: left; color: inherit; font: inherit; }
+    .stat b { display: block; font-size: 28px; line-height: 1.1; }
+    .stat span { color: var(--muted); font-size: 14px; }
+    .stat.active { outline: 2px solid var(--brand); }
+    .stat.urgent b { color: var(--red); }
+    .lead { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+    .lead.emergency { border-left: 5px solid var(--red); }
+    .lead summary { list-style: none; cursor: pointer; padding: 14px 16px; }
+    .lead summary::-webkit-details-marker { display: none; }
+    .top { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .name { font-weight: 600; font-size: 17px; }
+    .badge { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+    .b-emergency { color: var(--red); background: var(--red-bg); }
+    .b-person { color: var(--orange); background: var(--orange-bg); }
+    .b-ready { color: var(--green); background: var(--green-bg); }
+    .b-chatting { color: var(--muted); background: var(--gray-bg); }
+    .issue { margin: 6px 0 4px; }
+    .meta { color: var(--muted); font-size: 14px; display: flex; gap: 14px; flex-wrap: wrap; }
+    .meta a { color: var(--brand); font-weight: 600; text-decoration: none; }
+    .convo { border-top: 1px solid var(--line); padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 6px; background: var(--bg); }
+    .msg { max-width: 85%; padding: 7px 11px; border-radius: 12px; white-space: pre-wrap; font-size: 15px; }
+    .msg.user { align-self: flex-start; background: var(--card); border: 1px solid var(--line); }
+    .msg.assistant { align-self: flex-end; background: var(--brand); color: #fff; }
+    .empty { text-align: center; color: var(--muted); padding: 40px 0; }
+    .login { max-width: 380px; margin: 12vh auto; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 24px; }
+    .login h1 { font-size: 22px; margin-top: 0; }
+    .login input[type=password] { width: 100%; padding: 12px; font: inherit; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
+    .login label.remember { display: flex; gap: 8px; align-items: center; margin: 12px 0; color: var(--muted); font-size: 14px; }
+    .login button, .logout { background: var(--brand); color: #fff; border: 0; border-radius: 8px; padding: 12px 18px; font: inherit; font-weight: 600; cursor: pointer; }
+    .logout { background: none; color: var(--muted); padding: 4px; font-weight: 400; font-size: 14px; }
+    .error { color: var(--red); font-size: 14px; min-height: 20px; }
+    @media (max-width: 520px) { .stat b { font-size: 22px; } .stat span { font-size: 12px; } }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="app"></div>
+
+  <script>
+    var API = "https://hlzmldcebgoeyxmrefcw.supabase.co/functions/v1/leads";
+    var KEY_STORE = "vss-dashboard-key";
+    var app = document.getElementById("app");
+    var key = null, leads = [], filter = "all", lastUpdated = null, timer = null;
+
+    try { key = localStorage.getItem(KEY_STORE); } catch (e) {}
+    key ? refresh() : showLogin();
+
+    function showLogin(message) {
+      clearInterval(timer);
+      app.innerHTML =
+        '<form class="login"><h1>Leads dashboard</h1>' +
+        '<input type="password" placeholder="Dashboard password" aria-label="Dashboard password" autofocus>' +
+        '<label class="remember"><input type="checkbox" checked> Remember on this computer</label>' +
+        '<div class="error"></div><button type="submit">Open</button></form>';
+      var form = app.querySelector("form");
+      form.querySelector(".error").textContent = message || "";
+      form.onsubmit = function (e) {
+        e.preventDefault();
+        key = form.querySelector("input[type=password]").value.trim();
+        if (form.querySelector("input[type=checkbox]").checked) {
+          try { localStorage.setItem(KEY_STORE, key); } catch (e) {}
+        }
+        refresh();
+      };
+    }
+
+    function call(body) {
+      return fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Dashboard-Key": key },
+        body: JSON.stringify(body || {}),
+      }).then(function (r) {
+        if (r.status === 401) throw new Error("auth");
+        if (!r.ok) throw new Error("server");
+        return r.json();
+      });
+    }
+
+    function refresh() {
+      call().then(function (data) {
+        leads = data.leads;
+        lastUpdated = new Date();
+        render();
+        clearInterval(timer);
+        timer = setInterval(refresh, 30000);
+      }).catch(function (err) {
+        if (err.message === "auth") {
+          try { localStorage.removeItem(KEY_STORE); } catch (e) {}
+          showLogin("That password didn't work.");
+        } else if (!leads.length) {
+          app.innerHTML = '<p class="empty">Couldn\'t load leads. Check your internet and refresh the page.</p>';
+        }
+      });
+    }
+
+    // Who needs attention first: emergencies, then people asking for a person,
+    // then leads ready to schedule, then conversations still going.
+    function kind(l) {
+      if (l.status === "handed_off" && l.emergency) return "emergency";
+      if (l.status === "handed_off") return "person";
+      if (l.status === "complete") return "ready";
+      return "chatting";
+    }
+    var ORDER = { emergency: 0, person: 1, ready: 2, chatting: 3 };
+    var LABEL = { emergency: "EMERGENCY", person: "Wants a person", ready: "Ready to schedule", chatting: "Still chatting" };
+
+    function render() {
+      var counts = { needsCall: 0, ready: 0, chatting: 0 };
+      leads.forEach(function (l) {
+        var k = kind(l);
+        if (k === "emergency" || k === "person") counts.needsCall++;
+        else counts[k]++;
+      });
+
+      var shown = leads.filter(function (l) {
+        var k = kind(l);
+        if (filter === "needsCall") return k === "emergency" || k === "person";
+        return filter === "all" || filter === k;
+      }).sort(function (a, b) {
+        return ORDER[kind(a)] - ORDER[kind(b)] || new Date(b.updated_at) - new Date(a.updated_at);
+      });
+
+      app.innerHTML = "";
+      var header = el("header");
+      header.appendChild(el("h1", null, "Leads"));
+      var right = el("div");
+      right.appendChild(el("span", "updated", "Updated " + lastUpdated.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) + " · refreshes every 30s "));
+      var out = el("button", "logout", "Log out");
+      out.onclick = function () { try { localStorage.removeItem(KEY_STORE); } catch (e) {} key = null; leads = []; showLogin(); };
+      right.appendChild(out);
+      header.appendChild(right);
+      app.appendChild(header);
+
+      var stats = el("div", "stats");
+      [["needsCall", counts.needsCall, "Need a call now", counts.needsCall > 0],
+       ["ready", counts.ready, "Ready to schedule"],
+       ["chatting", counts.chatting, "Still chatting"]].forEach(function (s) {
+        var b = el("button", "stat" + (filter === s[0] ? " active" : "") + (s[3] ? " urgent" : ""));
+        b.appendChild(el("b", null, String(s[1])));
+        b.appendChild(el("span", null, s[2]));
+        b.onclick = function () { filter = filter === s[0] ? "all" : s[0]; render(); };
+        stats.appendChild(b);
+      });
+      app.appendChild(stats);
+
+      if (!shown.length) {
+        app.appendChild(el("p", "empty", leads.length ? "Nothing here right now." : "No leads yet. They'll show up here as soon as someone texts or chats."));
+        return;
+      }
+      shown.forEach(function (l) { app.appendChild(card(l)); });
+    }
+
+    function card(l) {
+      var k = kind(l);
+      var d = el("details", "lead" + (k === "emergency" ? " emergency" : ""));
+      var s = el("summary");
+      var top = el("div", "top");
+      top.appendChild(el("span", "name", l.name || "Name not given yet"));
+      top.appendChild(el("span", "badge b-" + k, LABEL[k]));
+      s.appendChild(top);
+      s.appendChild(el("div", "issue", l.issue || "Problem not described yet"));
+
+      var meta = el("div", "meta");
+      var phone = l.callback_phone || (l.channel === "sms" ? prettyPhone(l.phone) : null);
+      if (phone) {
+        var a = el("a", null, phone);
+        a.href = "tel:" + phone.replace(/[^\d+]/g, "");
+        meta.appendChild(a);
+      } else {
+        meta.appendChild(el("span", null, "No phone yet"));
+      }
+      if (l.address) {
+        var map = el("a", null, l.address);
+        map.href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(l.address);
+        map.target = "_blank";
+        map.rel = "noopener";
+        meta.appendChild(map);
+      }
+      meta.appendChild(el("span", null, (l.channel === "web" ? "Website chat" : "Text") + " · " + ago(l.updated_at)));
+      s.appendChild(meta);
+      d.appendChild(s);
+
+      d.addEventListener("toggle", function () {
+        if (!d.open || d.querySelector(".convo")) return;
+        var convo = el("div", "convo", "Loading conversation…");
+        d.appendChild(convo);
+        call({ conversationId: l.phone }).then(function (data) {
+          convo.textContent = "";
+          data.messages.forEach(function (m) { convo.appendChild(el("div", "msg " + m.role, m.content)); });
+        }).catch(function () { convo.textContent = "Couldn't load the conversation."; });
+      });
+      return d;
+    }
+
+    function prettyPhone(p) {
+      var m = /^\+1(\d{3})(\d{3})(\d{4})$/.exec(p);
+      return m ? m[1] + "-" + m[2] + "-" + m[3] : p;
+    }
+
+    function ago(iso) {
+      var mins = Math.round((Date.now() - new Date(iso)) / 60000);
+      if (mins < 1) return "just now";
+      if (mins < 60) return mins + " min ago";
+      var hrs = Math.round(mins / 60);
+      if (hrs < 24) return hrs + " hr ago";
+      return new Date(iso).toLocaleDateString([], { month: "short", day: "numeric" });
+    }
+
+    function el(tag, cls, text) {
+      var n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text != null) n.textContent = text;
+      return n;
+    }
+  </script>
+</body>
+</html>
