@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chat Box Demo</title>
+  <style>
+    :root { --brand: #0b6e4f; --ink: #1d1d1f; --muted: #5f6368; --bg: #ffffff; --band: #f2f6f4; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 17px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: var(--bg); }
+    header { background: var(--brand); color: #fff; padding: 18px 16px; }
+    header .wrap, main .wrap { max-width: 900px; margin: 0 auto; }
+    header strong { font-size: 20px; }
+    .hero { background: var(--band); padding: 56px 16px; }
+    h1 { font-size: clamp(28px, 5vw, 42px); line-height: 1.15; margin: 0 0 12px; }
+    .hero p { color: var(--muted); margin: 0; max-width: 560px; }
+    .services { padding: 40px 16px 120px; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+    .card { border: 1px solid #e3e5e8; border-radius: 12px; padding: 18px; }
+    .card h2 { font-size: 18px; margin: 0 0 6px; }
+    .card p { margin: 0; color: var(--muted); font-size: 15px; }
+    .note { margin-top: 24px; color: var(--muted); font-size: 15px; }
+  </style>
+</head>
+<body>
+  <header><div class="wrap"><strong>Valley Smart Services</strong> &nbsp;·&nbsp; Harlingen, TX</div></header>
+  <section class="hero">
+    <div class="wrap">
+      <h1>Heating, cooling, plumbing and electrical across the Valley.</h1>
+      <p>Tap the chat button in the corner to tell us what's going on. We answer in English and Español, day or night.</p>
+      <p class="note">Demo page: the chat box is live and talks to the real bot.</p>
+    </div>
+  </section>
+  <main>
+    <div class="wrap services">
+      <div class="card"><h2>AC &amp; Heating</h2><p>Repairs, tune ups and new systems.</p></div>
+      <div class="card"><h2>Plumbing</h2><p>Leaks, clogs, water heaters.</p></div>
+      <div class="card"><h2>Electrical</h2><p>Panels, outlets, lighting.</p></div>
+    </div>
+  </main>
+
+  <!-- This one line is all a website needs to add the chat box. -->
+  <script src="widget.js" data-endpoint="https://hlzmldcebgoeyxmrefcw.supabase.co/functions/v1/web-chat"></script>
+</body>
+</html>
