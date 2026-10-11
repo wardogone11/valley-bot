@@ -1,0 +1,536 @@
+<title>Valley Bot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@700;900&family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@500&display=swap">
+<style>
+  /* Layout: field-service SaaS pattern (utility bar, dark hero with two CTAs and a proof row, message mosaic), then tabbed feature demo, plans, and a floating "Text us" demo bubble. */
+  :root {
+    --night: #05211c;
+    --night-2: #0a3329;
+    --night-ink: #f1faf6;
+    --night-muted: #a6c7ba;
+    --night-line: #1d4a3d;
+    --sun: #ffb21f;
+    --sun-ink: #241500;
+    --ruby: #e5414f;
+    --paper: #f4f2ec;
+    --card: #ffffff;
+    --ink: #0d211b;
+    --muted: #536159;
+    --line: #dcdcd2;
+    --brand: #0b6e4f;
+    --brand-soft: #e1efe8;
+    --ruby-soft: #fde6e8;
+    --bubble: #ecefeb;
+    --display: "Red Hat Display", "Segoe UI", system-ui, sans-serif;
+    --body: "Red Hat Text", "Segoe UI", system-ui, sans-serif;
+    --mono: "Red Hat Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #0b1512; --card: #13201b; --ink: #e8f1ec; --muted: #9eb2a8; --line: #253a31;
+      --brand: #46c194; --brand-soft: #173329; --ruby-soft: #3b1b1f; --bubble: #1d2b26; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #0b1512; --card: #13201b; --ink: #e8f1ec; --muted: #9eb2a8; --line: #253a31;
+    --brand: #46c194; --brand-soft: #173329; --ruby-soft: #3b1b1f; --bubble: #1d2b26; color-scheme: dark;
+  }
+
+  html:not([data-lang="es"]) .es, html[data-lang="es"] .en { display: none; }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 18px/1.55 var(--body); }
+  .gutter { padding-inline: 16px; }
+  .wrap { max-width: 1160px; margin: 0 auto; }
+  h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+  p { margin: 0; }
+  a { color: inherit; }
+  button { font: inherit; }
+  :focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
+
+  /* Utility bar + nav */
+  .utility { background: var(--night-2); color: var(--night-muted); font-size: 14px; }
+  .utility .wrap { display: flex; justify-content: flex-end; align-items: center; gap: 18px; padding-block: 8px; }
+  .utility button { background: none; border: 0; color: var(--night-ink); font-weight: 700; cursor: pointer; padding: 2px 4px; }
+  .utility .sep { width: 1px; height: 16px; background: var(--night-line); }
+  .hero { background: var(--night); color: var(--night-ink); position: relative; overflow: hidden; }
+  .nav { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 18px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 900; font-size: 26px; letter-spacing: -0.01em; }
+  .logo svg { width: 36px; height: 36px; flex: none; }
+  .nav .btn { padding: 11px 18px; font-size: 16px; }
+
+  .btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 15px 24px; font-family: var(--display); font-weight: 900; font-size: 18px; cursor: pointer; text-decoration: none; border: 2px solid transparent; }
+  .btn-sun { background: var(--sun); color: var(--sun-ink); }
+  .btn-ghost { background: transparent; color: var(--night-ink); border-color: var(--night-ink); }
+  .btn svg { width: 18px; height: 18px; }
+
+  /* Hero */
+  .hero-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 40px; align-items: center; padding-block: 36px 64px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; color: var(--sun); font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .eyebrow::before { content: ""; width: 26px; height: 3px; background: var(--sun); border-radius: 2px; }
+  .hero h1 { font-size: clamp(40px, 6.2vw, 74px); line-height: 1.02; font-weight: 900; letter-spacing: -0.025em; margin-block: 16px 20px; }
+  .hero h1 u { text-decoration: none; background: linear-gradient(transparent 62%, color-mix(in srgb, var(--sun) 55%, transparent) 62% 92%, transparent 92%); }
+  .hero .lede { font-size: 20px; color: var(--night-muted); max-width: 33em; }
+  .ctas { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 30px; }
+  .proof { display: flex; flex-wrap: wrap; gap: 14px 30px; margin-top: 30px; }
+  .proof div { display: flex; align-items: center; gap: 10px; }
+  .proof .ic { width: 40px; height: 40px; border-radius: 10px; background: var(--night-2); display: grid; place-items: center; color: var(--sun); flex: none; }
+  .proof .ic svg { width: 21px; height: 21px; }
+  .proof b { display: block; font-family: var(--display); font-weight: 900; font-size: 18px; line-height: 1.1; }
+  .proof small { color: var(--night-muted); font-size: 14px; }
+
+  /* Message mosaic */
+  .mosaic { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; position: relative; }
+  .mosaic .col { display: grid; gap: 14px; align-content: start; }
+  .mosaic .col:last-child { margin-top: 46px; }
+  .tile { border-radius: 16px; padding: 16px; display: grid; gap: 10px; background: var(--night-2); border: 1px solid var(--night-line); }
+  .tile .town { font-size: 13px; color: var(--night-muted); display: flex; justify-content: space-between; gap: 8px; }
+  .tile .town b { color: var(--night-ink); font-weight: 700; }
+  .tile .txt { background: #e9f7f0; color: #0d211b; padding: 9px 12px; border-radius: 14px 14px 14px 4px; font-size: 16px; line-height: 1.35; justify-self: start; }
+  .tile .ans { background: var(--sun); color: var(--sun-ink); padding: 9px 12px; border-radius: 14px 14px 4px 14px; font-size: 15px; line-height: 1.35; justify-self: end; font-weight: 500; }
+  .tile.hot { background: color-mix(in srgb, var(--ruby) 22%, var(--night-2)); border-color: color-mix(in srgb, var(--ruby) 55%, transparent); }
+  .tile.hot .flag { font: 900 12px var(--display); letter-spacing: 0.08em; color: #fff; background: var(--ruby); padding: 3px 8px; border-radius: 6px; justify-self: start; }
+  .tile.photo { min-height: 128px; align-content: end; background:
+      radial-gradient(70% 90% at 85% 15%, color-mix(in srgb, var(--sun) 75%, transparent), transparent 60%),
+      linear-gradient(160deg, #0f4c3b, #062720); }
+  .tile.photo b { font-family: var(--display); font-weight: 900; font-size: 26px; line-height: 1.05; }
+  .tile.photo small { color: var(--night-muted); }
+  .mosaic-note { grid-column: 1 / -1; font-size: 13px; color: var(--night-muted); text-align: right; }
+
+  /* Sections */
+  section { padding-block: 84px 0; }
+  .center { text-align: center; display: grid; justify-items: center; gap: 14px; }
+  h2 { font-size: clamp(32px, 4.6vw, 52px); font-weight: 900; letter-spacing: -0.02em; line-height: 1.05; }
+  .sub { color: var(--muted); font-size: 20px; max-width: 40em; }
+
+  /* Tabs */
+  .tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 26px; }
+  .tab { border: 2px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 10px 20px; font-family: var(--display); font-weight: 900; font-size: 17px; cursor: pointer; }
+  .tab[aria-selected="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .stage { margin-top: 30px; background: var(--card); border: 1px solid var(--line); border-radius: 24px; overflow: hidden; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); min-height: 420px; }
+  .stage[hidden], .fab-card[hidden] { display: none; }
+  .stage-copy { padding: 44px; display: grid; gap: 16px; align-content: center; }
+  .stage-copy h3 { font-size: clamp(26px, 3vw, 36px); font-weight: 900; letter-spacing: -0.015em; line-height: 1.1; }
+  .stage-copy p { color: var(--muted); font-size: 19px; }
+  .checks { display: grid; gap: 10px; margin: 6px 0 0; padding: 0; list-style: none; }
+  .checks li { display: flex; gap: 10px; align-items: start; font-weight: 500; }
+  .checks li svg { width: 22px; height: 22px; flex: none; color: var(--brand); margin-top: 2px; }
+  .stage-visual { background: var(--brand-soft); padding: 36px; display: grid; place-items: center; }
+  .panel { width: 100%; max-width: 460px; background: var(--card); border-radius: 18px; box-shadow: 0 24px 50px -28px rgb(0 0 0 / 0.45); overflow: hidden; border: 1px solid var(--line); }
+  .panel-head { background: #0b6e4f; color: #fff; padding: 13px 16px; font-family: var(--display); font-weight: 900; display: flex; justify-content: space-between; gap: 8px; }
+  .panel-head small { font-family: var(--body); font-weight: 500; opacity: 0.85; }
+  .thread { padding: 16px; display: grid; gap: 8px; font-size: 16px; line-height: 1.4; }
+  .msg { max-width: 86%; padding: 9px 13px; border-radius: 16px; }
+  .msg.them { justify-self: end; background: #0b6e4f; color: #fff; border-bottom-right-radius: 4px; }
+  .msg.bot { justify-self: start; background: var(--bubble); border-bottom-left-radius: 4px; }
+  .mail { padding: 18px; display: grid; gap: 10px; font-size: 16px; }
+  .mail .from { font-size: 14px; color: var(--muted); }
+  .mail .subject { font-family: var(--display); font-weight: 900; font-size: 22px; color: var(--ruby); line-height: 1.15; }
+  .mail dl { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; }
+  .mail dt { color: var(--muted); }
+  .mail dd { margin: 0; }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .lead { display: grid; gap: 2px; padding: 13px 16px; border-bottom: 1px solid var(--line); font-size: 16px; }
+  .lead:last-child { border-bottom: 0; }
+  .lead.hot { box-shadow: inset 4px 0 0 var(--ruby); }
+  .lead-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .lead-top b { font-weight: 700; }
+  .lead .meta { color: var(--muted); font-size: 15px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .lead .meta .num { color: var(--brand); }
+  .pill { font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .pill.red { color: var(--ruby); background: var(--ruby-soft); }
+  .pill.green { color: var(--brand); background: var(--brand-soft); }
+  .pill.gray { color: var(--muted); background: var(--bubble); }
+  .area { padding: 22px; display: grid; gap: 12px; }
+  .area .row { display: flex; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 10px; background: var(--bubble); font-weight: 500; }
+  .area .row.out { opacity: 0.55; text-decoration: line-through; }
+
+  /* Steps */
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; margin-top: 40px; counter-reset: s; }
+  .step { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 26px; display: grid; gap: 10px; align-content: start; }
+  .step::before { counter-increment: s; content: counter(s); width: 44px; height: 44px; border-radius: 12px; background: var(--sun); color: var(--sun-ink); display: grid; place-items: center; font: 900 22px var(--display); }
+  .step h3 { font-size: 22px; font-weight: 900; }
+  .step p { color: var(--muted); font-size: 17px; }
+
+  /* Plans */
+  .plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin-top: 40px; max-width: 920px; margin-inline: auto; }
+  .plan { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 32px; display: grid; gap: 14px; align-content: start; }
+  .plan.pro { background: var(--night); color: var(--night-ink); border-color: var(--night); position: relative; }
+  .plan .name { font-family: var(--display); font-weight: 900; font-size: 22px; }
+  .plan .price { font-family: var(--display); font-weight: 900; font-size: clamp(40px, 5vw, 56px); letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .plan .price small { font-family: var(--body); font-weight: 500; font-size: 18px; letter-spacing: 0; color: var(--muted); }
+  .plan.pro .price small, .plan.pro p { color: var(--night-muted); }
+  .plan p { color: var(--muted); font-size: 17px; }
+  .plan .tag { position: absolute; top: 24px; right: 24px; background: var(--sun); color: var(--sun-ink); font: 900 12px var(--display); letter-spacing: 0.06em; text-transform: uppercase; padding: 5px 10px; border-radius: 999px; }
+  .trial-line { margin-top: 26px; text-align: center; font-weight: 700; font-size: 19px; }
+  .trial-line span { background: var(--sun); color: var(--sun-ink); padding: 3px 10px; border-radius: 8px; }
+
+  /* Closing */
+  .closing { margin-top: 96px; background: var(--night); color: var(--night-ink); }
+  .closing .wrap { padding-block: 72px; display: grid; gap: 18px; justify-items: center; text-align: center; }
+  .closing h2 { font-size: clamp(36px, 6vw, 68px); }
+  .closing p { color: var(--night-muted); font-size: 20px; }
+  .email-box { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; background: var(--night-2); border: 1px solid var(--night-line); border-radius: 14px; padding: 10px 10px 10px 18px; }
+  .email { font-family: var(--mono); font-size: 18px; overflow-wrap: anywhere; user-select: all; }
+  .closing .btn { padding: 11px 18px; font-size: 16px; }
+
+  /* Floating demo bubble */
+  .fab { position: fixed; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 20; display: grid; justify-items: end; gap: 12px; }
+  .fab-btn { display: inline-flex; align-items: center; gap: 10px; background: var(--sun); color: var(--sun-ink); border: 0; border-radius: 999px; padding: 14px 20px; font: 900 17px var(--display); cursor: pointer; box-shadow: 0 14px 30px -12px rgb(0 0 0 / 0.5); }
+  .fab-btn svg { width: 20px; height: 20px; }
+  .fab-card { width: min(340px, calc(100vw - 36px)); background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; box-shadow: 0 24px 50px -20px rgb(0 0 0 / 0.5); }
+  .fab-card .thread { max-height: 300px; overflow-y: auto; }
+  .fab-card .demo-note { font-size: 12px; color: var(--muted); padding: 0 16px 12px; }
+  .typing { justify-self: start; background: var(--bubble); border-radius: 16px; border-bottom-left-radius: 4px; padding: 12px 14px; display: inline-flex; gap: 5px; }
+  .typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+
+  @media (max-width: 900px) {
+    .hero-grid, .stage { grid-template-columns: minmax(0, 1fr); }
+    .stage-copy { padding: 30px; }
+    .stage-visual { padding: 24px; }
+    .steps { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 600px) {
+    body { font-size: 17px; }
+    .nav .btn { display: none; }
+    .plans { grid-template-columns: minmax(0, 1fr); }
+    .mosaic .col:last-child { margin-top: 0; }
+    .plan .tag { position: static; justify-self: start; }
+    .fab-btn span { display: none; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .btn, .tab, .fab-btn { transition: transform 0.15s, background-color 0.15s, color 0.15s; }
+    .btn:hover, .fab-btn:hover { transform: translateY(-2px); }
+    .tile { animation: float 7s ease-in-out infinite; }
+    .mosaic .col:last-child .tile { animation-delay: -3.5s; }
+    .typing i { animation: dot 1.2s ease-in-out infinite; }
+    .typing i:nth-child(2) { animation-delay: 0.15s; }
+    .typing i:nth-child(3) { animation-delay: 0.3s; }
+    .msg.new { animation: pop 0.25s ease-out; }
+  }
+  @keyframes float { 50% { transform: translateY(-6px); } }
+  @keyframes dot { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-4px); opacity: 1; } }
+  @keyframes pop { from { transform: scale(0.96); } }
+</style>
+
+<div class="utility gutter">
+  <div class="wrap">
+    <span><span class="en">Built in the Rio Grande Valley</span><span class="es">Hecho en el Valle del Río Grande</span></span>
+    <span class="sep"></span>
+    <button type="button" id="lang-switch" data-to="es"><span class="en">Español</span><span class="es">English</span></button>
+  </div>
+</div>
+
+<div class="hero gutter">
+  <div class="wrap">
+    <nav class="nav">
+      <div class="logo">
+        <svg viewBox="0 0 36 36" aria-hidden="true"><rect x="2" y="4" width="32" height="23" rx="8" fill="#ffb21f"/><path d="M10 27l-1 7 8-7z" fill="#ffb21f"/><path d="M9 17c3.5-5.5 5.5-5.5 9 0s5.5 5.5 9 0" stroke="#05211c" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+        Valley Bot
+      </div>
+      <a class="btn btn-sun" href="#contact"><span class="en">Start free trial</span><span class="es">Prueba gratis</span></a>
+    </nav>
+
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow"><span class="en">For HVAC, plumbing &amp; electrical shops</span><span class="es">Para aire, plomería y electricidad</span></span>
+        <h1>
+          <span class="en">Your customers text at 9&nbsp;PM. <u>Valley&nbsp;Bot answers.</u></span>
+          <span class="es">Tus clientes escriben a las 9&nbsp;PM. <u>Valley&nbsp;Bot contesta.</u></span>
+        </h1>
+        <p class="lede">
+          <span class="en">It answers every text and website chat in English, Spanish or Spanglish, gets the details of the job, and hands you a lead that is ready to schedule.</span>
+          <span class="es">Contesta cada mensaje y cada chat de tu página web en inglés, español o Spanglish, junta los datos del trabajo y te entrega un cliente listo para agendar.</span>
+        </p>
+        <div class="ctas">
+          <a class="btn btn-sun" href="#contact"><span class="en">Start 14 day free trial</span><span class="es">Empieza tu prueba de 14 días</span></a>
+          <a class="btn btn-ghost" href="#see"><span class="en">See how it works</span><span class="es">Mira cómo funciona</span></a>
+        </div>
+        <div class="proof">
+          <div><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span><b>~3 sec</b><small><span class="en">to answer</span><span class="es">para contestar</span></small></span></div>
+          <div><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h11v9H7l-4 3z"/><path d="M14 9h7v9l-4-3h-3"/></svg></span><span><b>EN · ES</b><small><span class="en">and Spanglish</span><span class="es">y Spanglish</span></small></span></div>
+          <div><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M20 13A8 8 0 1 1 11 4a6 6 0 0 0 9 9z"/></svg></span><span><b>24/7</b><small><span class="en">nights &amp; weekends</span><span class="es">noches y fines</span></small></span></div>
+        </div>
+      </div>
+
+      <div class="mosaic" aria-label="Example messages">
+        <div class="col">
+          <div class="tile"><span class="town"><b>Harlingen</b><span>9:42 PM</span></span><span class="txt">oye my AC no está enfriando, can you send someone?</span><span class="ans">Claro, we can send someone. ¿Cómo te llamas?</span></div>
+          <div class="tile hot"><span class="flag">EMERGENCY</span><span class="town"><b>Brownsville</b><span>2:15 AM</span></span><span class="txt">huele a gas en mi cocina</span><span class="ans">Sal de la casa ahora. Ya avisamos al despachador.</span></div>
+        </div>
+        <div class="col">
+          <div class="tile photo"><b><span class="en">Every text answered.</span><span class="es">Cada mensaje, contestado.</span></b><small><span class="en">Even on Sunday.</span><span class="es">Hasta en domingo.</span></small></div>
+          <div class="tile"><span class="town"><b>McAllen</b><span>Sun 7:05 AM</span></span><span class="txt">my water heater won't turn on</span><span class="ans">Sorry about that! What's your name?</span></div>
+        </div>
+        <span class="mosaic-note"><span class="en">Example messages</span><span class="es">Mensajes de ejemplo</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="gutter">
+  <div class="wrap">
+    <section id="see" class="center" aria-labelledby="see-h">
+      <h2 id="see-h"><span class="en">Everything between "hello" and the booked job</span><span class="es">Todo entre el "hola" y el trabajo agendado</span></h2>
+      <p class="sub"><span class="en">Pick a part to see it.</span><span class="es">Escoge una parte para verla.</span></p>
+    </section>
+
+    <div class="tabs" role="tablist" aria-label="Features">
+      <button class="tab" role="tab" id="tab-talk" aria-controls="pane-talk" aria-selected="true"><span class="en">Talks</span><span class="es">Platica</span></button>
+      <button class="tab" role="tab" id="tab-alert" aria-controls="pane-alert" aria-selected="false"><span class="en">Alerts you</span><span class="es">Te avisa</span></button>
+      <button class="tab" role="tab" id="tab-leads" aria-controls="pane-leads" aria-selected="false"><span class="en">Organizes</span><span class="es">Organiza</span></button>
+      <button class="tab" role="tab" id="tab-area" aria-controls="pane-area" aria-selected="false"><span class="en">Stays local</span><span class="es">Solo tu zona</span></button>
+    </div>
+
+    <div class="stage" role="tabpanel" id="pane-talk" aria-labelledby="tab-talk">
+      <div class="stage-copy">
+        <h3><span class="en">Talks like your customers</span><span class="es">Habla como tus clientes</span></h3>
+        <p><span class="en">English, Spanish or a mix of both. It answers in whatever they write and never asks anyone to press 1 for English.</span><span class="es">Inglés, español o una mezcla de los dos. Contesta en el idioma en que le escriben y nunca pide que marquen 1 para inglés.</span></p>
+        <ul class="checks">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span><span class="en">Gets name, phone, address and the problem</span><span class="es">Junta nombre, teléfono, dirección y el problema</span></span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span><span class="en">One or two questions at a time</span><span class="es">Una o dos preguntas a la vez</span></span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span><span class="en">Texts and your website chat</span><span class="es">Mensajes de texto y el chat de tu página</span></span></li>
+        </ul>
+      </div>
+      <div class="stage-visual">
+        <div class="panel">
+          <div class="panel-head">Your Business <small>English · Español</small></div>
+          <div class="thread">
+            <div class="msg them">oye my AC no está enfriando, can you send someone?</div>
+            <div class="msg bot">Claro, we can send someone. ¿Cómo te llamas?</div>
+            <div class="msg them">Rosie Garza</div>
+            <div class="msg bot">Gracias, Rosie. Is this number the best one to reach you?</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage" role="tabpanel" id="pane-alert" aria-labelledby="tab-alert" hidden>
+      <div class="stage-copy">
+        <h3><span class="en">Alerts you the second it matters</span><span class="es">Te avisa al instante</span></h3>
+        <p><span class="en">A gas smell, flooding, sparks or smoke gets the customer a quick safety tip and gets you an alert right away. You also hear the moment a lead is ready to book.</span><span class="es">Si huele a gas, hay una inundación, chispas o humo, el cliente recibe un consejo de seguridad y tú una alerta al instante. También te avisa en cuanto un cliente está listo para agendar.</span></p>
+      </div>
+      <div class="stage-visual">
+        <div class="panel">
+          <div class="panel-head"><span class="en">Alert email</span><span class="es">Correo de alerta</span> <small><span class="en">Example</span><span class="es">Ejemplo</span></small></div>
+          <div class="mail">
+            <span class="from">From: Valley Bot</span>
+            <span class="subject">EMERGENCY. Call <span class="num">956-555-3021</span> now.</span>
+            <dl>
+              <dt>Issue</dt><dd>Water heater leaking, garage flooding</dd>
+              <dt>Phone</dt><dd class="num">956-555-3021</dd>
+              <dt>Said</dt><dd>"my water heater is leaking all over the garage floor"</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage" role="tabpanel" id="pane-leads" aria-labelledby="tab-leads" hidden>
+      <div class="stage-copy">
+        <h3><span class="en">Every lead on one page</span><span class="es">Todos tus clientes en una página</span></h3>
+        <p><span class="en">A private page lists every lead with emergencies on top. Tap a number to call, open the address in Maps, and read the whole conversation.</span><span class="es">Una página privada muestra cada cliente con las emergencias hasta arriba. Llama con un toque, abre la dirección en Maps y lee toda la conversación.</span></p>
+      </div>
+      <div class="stage-visual">
+        <div class="panel">
+          <div class="panel-head"><span class="en">Your leads</span><span class="es">Tus clientes</span> <small><span class="en">Example</span><span class="es">Ejemplo</span></small></div>
+          <div class="lead hot">
+            <div class="lead-top"><b>Name not given yet</b><span class="pill red">EMERGENCY</span></div>
+            <span>Water heater leaking, garage flooding</span>
+            <span class="meta"><span class="num">956-555-3021</span><span>Website chat · 2 min ago</span></span>
+          </div>
+          <div class="lead">
+            <div class="lead-top"><b>María López</b><span class="pill green">Ready to schedule</span></div>
+            <span>AC blowing warm air</span>
+            <span class="meta"><span class="num">956-555-0171</span><span>1420 E Tyler Ave, Harlingen</span></span>
+          </div>
+          <div class="lead">
+            <div class="lead-top"><b>José Peña</b><span class="pill gray">Still chatting</span></div>
+            <span>Breaker keeps tripping</span>
+            <span class="meta"><span>Website chat · 20 min ago</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage" role="tabpanel" id="pane-area" aria-labelledby="tab-area" hidden>
+      <div class="stage-copy">
+        <h3><span class="en">Only jobs you can take</span><span class="es">Solo trabajos que puedes tomar</span></h3>
+        <p><span class="en">If the address is outside the Valley, it says so politely, so your alerts are only real jobs in your area.</span><span class="es">Si la dirección está fuera del Valle, lo dice con amabilidad, así tus alertas son solo trabajos de verdad en tu zona.</span></p>
+      </div>
+      <div class="stage-visual">
+        <div class="panel">
+          <div class="panel-head"><span class="en">Service area</span><span class="es">Zona de servicio</span> <small><span class="en">Example</span><span class="es">Ejemplo</span></small></div>
+          <div class="area">
+            <div class="row"><span>Harlingen</span><span class="pill green">✓</span></div>
+            <div class="row"><span>San Benito</span><span class="pill green">✓</span></div>
+            <div class="row"><span>Brownsville</span><span class="pill green">✓</span></div>
+            <div class="row"><span>McAllen</span><span class="pill green">✓</span></div>
+            <div class="row out"><span>Austin</span><span class="pill gray">✕</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="center" aria-labelledby="start-h">
+      <h2 id="start-h"><span class="en">Up and running in 3 steps</span><span class="es">Listo en 3 pasos</span></h2>
+    </section>
+    <div class="steps">
+      <div class="step">
+        <h3><span class="en">We set it up</span><span class="es">Lo instalamos</span></h3>
+        <p><span class="en">Your business name, your service area, a texting number, and the chat box for your website.</span><span class="es">Con el nombre de tu negocio, tu zona de servicio, un número para mensajes y el chat para tu página web.</span></p>
+      </div>
+      <div class="step">
+        <h3><span class="en">Customers reach out</span><span class="es">Tus clientes escriben</span></h3>
+        <p><span class="en">They text or chat whenever something breaks. Valley Bot answers and gets the details.</span><span class="es">Mandan un mensaje o usan el chat cuando algo se descompone. Valley Bot les contesta y junta los datos.</span></p>
+      </div>
+      <div class="step">
+        <h3><span class="en">You call and book</span><span class="es">Tú llamas y agendas</span></h3>
+        <p><span class="en">You get an alert the moment a lead is ready or an emergency comes in. Call them back and put it on the schedule.</span><span class="es">Te llega una alerta en cuanto un cliente está listo o hay una emergencia. Le llamas y lo pones en la agenda.</span></p>
+      </div>
+    </div>
+
+    <section class="center" aria-labelledby="plans-h">
+      <h2 id="plans-h"><span class="en">Simple monthly plans</span><span class="es">Planes mensuales sencillos</span></h2>
+    </section>
+    <div class="plans">
+      <div class="plan">
+        <span class="name">Starter<span class="es"> (Básico)</span></span>
+        <div class="price">$150 to $300 <small><span class="en">a month</span><span class="es">al mes</span></small></div>
+        <p><span class="en">Texting assistant, website chat box, your leads page, and instant alerts for new leads and emergencies.</span><span class="es">Asistente de mensajes de texto, chat para tu página web, tu página de clientes y alertas al instante de clientes nuevos y emergencias.</span></p>
+      </div>
+      <div class="plan pro">
+        <span class="tag"><span class="en">Most connected</span><span class="es">Más conectado</span></span>
+        <span class="name">Pro</span>
+        <div class="price"><span class="en">From $500</span><span class="es">Desde $500</span> <small><span class="en">a month</span><span class="es">al mes</span></small></div>
+        <p><span class="en">Everything in Starter, plus each new lead goes straight into Housecall Pro or Jobber.</span><span class="es">Todo lo del plan Básico, y cada cliente nuevo entra directo a Housecall Pro o Jobber.</span></p>
+      </div>
+    </div>
+    <p class="trial-line"><span class="en">Every plan starts with a <span>free 14 day trial</span></span><span class="es">Todos los planes empiezan con una <span>prueba gratis de 14 días</span></span></p>
+  </div>
+</div>
+
+<div class="closing gutter" id="contact">
+  <div class="wrap">
+    <h2><span class="en">Never miss another text.</span><span class="es">No vuelvas a perder un mensaje.</span></h2>
+    <p><span class="en">Email me and I'll set up your free trial.</span><span class="es">Escríbeme y te preparo tu prueba gratis.</span></p>
+    <div class="email-box">
+      <span class="email">wardogone11@gmail.com</span>
+      <button type="button" class="btn btn-sun copy"><span class="en">Copy email</span><span class="es">Copiar correo</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="fab">
+  <div class="fab-card" id="fab-card" hidden>
+    <div class="panel-head">Valley Bot <small>Demo</small></div>
+    <div class="thread" id="fab-thread" aria-live="polite"></div>
+    <p class="demo-note"><span class="en">A replay of a real test conversation.</span><span class="es">Una repetición de una conversación de prueba real.</span></p>
+  </div>
+  <button type="button" class="fab-btn" id="fab-btn" aria-expanded="false" aria-controls="fab-card">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2z"/></svg>
+    <span><span class="en">Try a demo text</span><span class="es">Prueba un mensaje</span></span>
+  </button>
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var EMAIL = "wardogone11@gmail.com";
+
+    function setLang(lang) {
+      root.setAttribute("data-lang", lang);
+      root.lang = lang;
+      try { localStorage.setItem("valley-bot-lang", lang); } catch (e) {}
+    }
+    var start = location.hash === "#es" ? "es" : null;
+    if (!start) { try { start = localStorage.getItem("valley-bot-lang"); } catch (e) {} }
+    setLang(start === "es" ? "es" : "en");
+    document.getElementById("lang-switch").addEventListener("click", function () {
+      setLang(root.getAttribute("data-lang") === "es" ? "en" : "es");
+    });
+
+    // Feature tabs
+    var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab"));
+    function select(tab) {
+      tabs.forEach(function (t) {
+        var on = t === tab;
+        t.setAttribute("aria-selected", String(on));
+        t.tabIndex = on ? 0 : -1;
+        document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+      });
+    }
+    tabs.forEach(function (t, i) {
+      t.addEventListener("click", function () { select(t); });
+      t.addEventListener("keydown", function (e) {
+        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+        var next = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+        select(next); next.focus();
+      });
+    });
+
+    // Copy email
+    document.querySelectorAll(".copy").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var label = function () { btn.textContent = root.getAttribute("data-lang") === "es" ? "Copiado" : "Copied"; };
+        var fallback = function () {
+          var r = document.createRange();
+          r.selectNodeContents(btn.parentNode.querySelector(".email"));
+          var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        };
+        try { navigator.clipboard.writeText(EMAIL).then(label, fallback); } catch (e) { fallback(); }
+      });
+    });
+
+    // Floating demo: replays a real test conversation from the bot.
+    var SCRIPT = [
+      ["them", "oye my AC no está enfriando, can you send someone?"],
+      ["bot", "Claro, we can send someone. ¿Cómo te llamas?"],
+      ["them", "Rosie Garza"],
+      ["bot", "Gracias, Rosie. Is this number the best one to reach you?"],
+      ["them", "yes"],
+      ["bot", "Perfect. What's the address where the AC is?"]
+    ];
+    var card = document.getElementById("fab-card");
+    var thread = document.getElementById("fab-thread");
+    var fab = document.getElementById("fab-btn");
+    var timer = null;
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function add(cls, text) {
+      var d = document.createElement("div");
+      d.className = "msg " + cls + " new";
+      d.textContent = text;
+      thread.appendChild(d);
+      thread.scrollTop = thread.scrollHeight;
+    }
+    function play() {
+      clearTimeout(timer);
+      thread.textContent = "";
+      if (reduce) { SCRIPT.forEach(function (m) { add(m[0], m[1]); }); return; }
+      var i = 0;
+      (function next() {
+        if (i >= SCRIPT.length) return;
+        var m = SCRIPT[i++];
+        if (m[0] === "bot") {
+          var t = document.createElement("span");
+          t.className = "typing";
+          t.innerHTML = "<i></i><i></i><i></i>";
+          thread.appendChild(t);
+          thread.scrollTop = thread.scrollHeight;
+          timer = setTimeout(function () { t.remove(); add("bot", m[1]); timer = setTimeout(next, 700); }, 1100);
+        } else {
+          add("them", m[1]);
+          timer = setTimeout(next, 600);
+        }
+      })();
+    }
+    fab.addEventListener("click", function () {
+      var open = card.hidden;
+      card.hidden = !open;
+      fab.setAttribute("aria-expanded", String(open));
+      if (open) play(); else clearTimeout(timer);
+    });
+  })();
+</script>
