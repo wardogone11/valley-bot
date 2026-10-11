@@ -23,7 +23,7 @@
     header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
     h1 { margin: 8px 0; font-size: 26px; }
     .updated { color: var(--muted); font-size: 14px; }
-    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0 16px; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 12px 0 16px; }
     .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; cursor: pointer; text-align: left; color: inherit; font: inherit; }
     .stat b { display: block; font-size: 28px; line-height: 1.1; }
     .stat span { color: var(--muted); font-size: 14px; }
@@ -39,7 +39,10 @@
     .b-emergency { color: var(--red); background: var(--red-bg); }
     .b-person { color: var(--orange); background: var(--orange-bg); }
     .b-ready { color: var(--green); background: var(--green-bg); }
-    .b-chatting { color: var(--muted); background: var(--gray-bg); }
+    .b-chatting, .b-done { color: var(--muted); background: var(--gray-bg); }
+    .lead.done { opacity: .7; }
+    .actions { padding: 0 16px 14px; }
+    .actions button { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 8px 14px; font: inherit; font-size: 14px; cursor: pointer; }
     .issue { margin: 6px 0 4px; }
     .meta { color: var(--muted); font-size: 14px; display: flex; gap: 14px; flex-wrap: wrap; }
     .meta a { color: var(--brand); font-weight: 600; text-decoration: none; }
@@ -55,7 +58,7 @@
     .login button, .logout { background: var(--brand); color: #fff; border: 0; border-radius: 8px; padding: 12px 18px; font: inherit; font-weight: 600; cursor: pointer; }
     .logout { background: none; color: var(--muted); padding: 4px; font-weight: 400; font-size: 14px; }
     .error { color: var(--red); font-size: 14px; min-height: 20px; }
-    @media (max-width: 520px) { .stat b { font-size: 22px; } .stat span { font-size: 12px; } }
+    @media (max-width: 520px) { .stats { grid-template-columns: repeat(2, 1fr); } .stat b { font-size: 22px; } .stat span { font-size: 12px; } }
   </style>
 </head>
 <body>
@@ -121,16 +124,17 @@
     // Who needs attention first: emergencies, then people asking for a person,
     // then leads ready to schedule, then conversations still going.
     function kind(l) {
+      if (l.closed_at) return "done";
       if (l.status === "handed_off" && l.emergency) return "emergency";
       if (l.status === "handed_off") return "person";
       if (l.status === "complete") return "ready";
       return "chatting";
     }
-    var ORDER = { emergency: 0, person: 1, ready: 2, chatting: 3 };
-    var LABEL = { emergency: "EMERGENCY", person: "Wants a person", ready: "Ready to schedule", chatting: "Still chatting" };
+    var ORDER = { emergency: 0, person: 1, ready: 2, chatting: 3, done: 4 };
+    var LABEL = { emergency: "EMERGENCY", person: "Wants a person", ready: "Ready to schedule", chatting: "Still chatting", done: "Done" };
 
     function render() {
-      var counts = { needsCall: 0, ready: 0, chatting: 0 };
+      var counts = { needsCall: 0, ready: 0, chatting: 0, done: 0 };
       leads.forEach(function (l) {
         var k = kind(l);
         if (k === "emergency" || k === "person") counts.needsCall++;
@@ -140,7 +144,8 @@
       var shown = leads.filter(function (l) {
         var k = kind(l);
         if (filter === "needsCall") return k === "emergency" || k === "person";
-        return filter === "all" || filter === k;
+        if (filter === "all") return k !== "done";
+        return filter === k;
       }).sort(function (a, b) {
         return ORDER[kind(a)] - ORDER[kind(b)] || new Date(b.updated_at) - new Date(a.updated_at);
       });
@@ -159,7 +164,8 @@
       var stats = el("div", "stats");
       [["needsCall", counts.needsCall, "Need a call now", counts.needsCall > 0],
        ["ready", counts.ready, "Ready to schedule"],
-       ["chatting", counts.chatting, "Still chatting"]].forEach(function (s) {
+       ["chatting", counts.chatting, "Still chatting"],
+       ["done", counts.done, "Done"]].forEach(function (s) {
         var b = el("button", "stat" + (filter === s[0] ? " active" : "") + (s[3] ? " urgent" : ""));
         b.appendChild(el("b", null, String(s[1])));
         b.appendChild(el("span", null, s[2]));
@@ -177,7 +183,7 @@
 
     function card(l) {
       var k = kind(l);
-      var d = el("details", "lead" + (k === "emergency" ? " emergency" : ""));
+      var d = el("details", "lead" + (k === "emergency" ? " emergency" : "") + (k === "done" ? " done" : ""));
       var s = el("summary");
       var top = el("div", "top");
       top.appendChild(el("span", "name", l.name || "Name not given yet"));
@@ -204,6 +210,17 @@
       meta.appendChild(el("span", null, (l.channel === "web" ? "Website chat" : "Text") + " · " + ago(l.updated_at)));
       s.appendChild(meta);
       d.appendChild(s);
+
+      var actions = el("div", "actions");
+      var mark = el("button", null, l.closed_at ? "Undo done" : "Mark done");
+      mark.onclick = function () {
+        mark.disabled = true;
+        call({ conversationId: l.phone, action: l.closed_at ? "reopen" : "close" })
+          .then(refresh)
+          .catch(function () { mark.disabled = false; mark.textContent = "Couldn't save, try again"; });
+      };
+      actions.appendChild(mark);
+      d.appendChild(actions);
 
       d.addEventListener("toggle", function () {
         if (!d.open || d.querySelector(".convo")) return;
