@@ -6,6 +6,11 @@
  *
  * data-business is the id the business was set up with.
  * Optional attributes: data-title (header text), data-color (brand color).
+ * After-hours greeting (a "we're closed, message us anyway" greeting and a small bubble):
+ *   data-hours-open (default 8), data-hours-close (default 18), data-closed-days (default "Sun",
+ *   for example "Sat,Sun"), data-timezone (default America/Chicago),
+ *   data-after-hours-message (replaces the greeting), data-nudge-delay (milliseconds, default 8000).
+ * To preview it, add ?vss-force=closed to the page address.
  */
 (function () {
   var script = document.currentScript;
@@ -13,11 +18,24 @@
   var BUSINESS = script.getAttribute("data-business");
   var TITLE = script.getAttribute("data-title") || "Valley Smart Services";
   var COLOR = script.getAttribute("data-color") || "#0b6e4f";
-  var GREETING = "Hi! How can we help today? / ¡Hola! ¿En qué te podemos ayudar?";
+  var OPEN_HOUR = Number(script.getAttribute("data-hours-open") || 8);
+  var CLOSE_HOUR = Number(script.getAttribute("data-hours-close") || 18);
+  var CLOSED_DAYS = (script.getAttribute("data-closed-days") || "Sun").split(",").map(function (d) { return d.trim().slice(0, 3).toLowerCase(); });
+  var TIMEZONE = script.getAttribute("data-timezone") || "America/Chicago";
+  var FORCE = new URLSearchParams(location.search).get("vss-force");
+  var CLOSED = FORCE ? FORCE === "closed" : isClosed();
+  var NUDGE_DELAY = FORCE ? 300 : Number(script.getAttribute("data-nudge-delay") || 8000);
+  var GREETING_OPEN = "Hi! How can we help today? / ¡Hola! ¿En qué te podemos ayudar?";
+  var GREETING_CLOSED = script.getAttribute("data-after-hours-message") ||
+    "Hi! We're closed right now, but you can message us here and the team will follow up when we open. / ¡Hola! Estamos cerrados ahorita, pero puedes escribirnos aquí y el equipo te contesta cuando abramos.";
+  var NUDGE_TEXT = "We're closed right now, but message us here. / Estamos cerrados, pero escríbenos aquí.";
+  var GREETING = CLOSED ? GREETING_CLOSED : GREETING_OPEN;
   var STORE_KEY = "vss-chat-" + BUSINESS;
 
   // Remember the conversation across page loads, if the browser allows it.
   var state = load() || { sessionId: newId(), messages: [{ from: "bot", text: GREETING }] };
+  // A visitor who has only seen the greeting gets the greeting that fits the time of day.
+  if (state.messages.length === 1 && state.messages[0].from === "bot") state.messages[0].text = GREETING;
 
   var css = [
     ".vss-btn{position:fixed;right:20px;bottom:20px;width:60px;height:60px;border-radius:50%;border:0;cursor:pointer;",
@@ -39,6 +57,9 @@
     ".vss-form input{flex:1;border:0;padding:14px;font:inherit;outline:none;min-width:0}",
     ".vss-form button{border:0;background:none;color:" + COLOR + ";font-weight:600;padding:0 16px;cursor:pointer;font:inherit}",
     ".vss-form button:disabled{opacity:.4;cursor:default}",
+    ".vss-nudge{position:fixed;right:20px;bottom:92px;max-width:260px;background:#fff;color:#1d1d1f;border-radius:14px;padding:12px 34px 12px 14px;",
+    "box-shadow:0 8px 30px rgba(0,0,0,.25);z-index:2147483000;font:14px/1.4 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;cursor:pointer}",
+    ".vss-nx{position:absolute;top:4px;right:6px;background:none;border:0;font-size:20px;line-height:1;color:#5f6368;cursor:pointer}",
     "@media (max-width:480px){.vss-panel{right:0;bottom:0;width:100vw;max-width:100vw;height:100%;max-height:100%;border-radius:0}}",
   ].join("");
   var style = document.createElement("style");
@@ -57,7 +78,7 @@
   var titleBox = el("div");
   titleBox.textContent = TITLE;
   var sub = el("small");
-  sub.textContent = "English · Español";
+  sub.textContent = CLOSED ? "Closed now, message us anyway · Cerrado, escríbenos" : "English · Español";
   titleBox.appendChild(sub);
   var close = el("button", "vss-x");
   close.setAttribute("aria-label", "Close chat");
@@ -86,7 +107,30 @@
 
   state.messages.forEach(function (m) { addBubble(m.from, m.text); });
 
+  // After hours, a small bubble invites the visitor to write anyway (once per visit).
+  var nudge = null;
+  if (CLOSED && !sessionGet("vss-nudge-" + BUSINESS)) {
+    setTimeout(function () {
+      if (panel.classList.contains("open")) return;
+      nudge = el("div", "vss-nudge");
+      nudge.setAttribute("role", "status");
+      var msg = el("span");
+      msg.textContent = NUDGE_TEXT;
+      var x = el("button", "vss-nx");
+      x.setAttribute("aria-label", "Dismiss");
+      x.textContent = "×";
+      nudge.appendChild(msg);
+      nudge.appendChild(x);
+      nudge.onclick = function (e) {
+        hideNudge();
+        if (e.target !== x) { panel.classList.add("open"); input.focus(); }
+      };
+      document.body.appendChild(nudge);
+    }, NUDGE_DELAY);
+  }
+
   btn.onclick = function () {
+    hideNudge();
     panel.classList.toggle("open");
     if (panel.classList.contains("open")) input.focus();
   };
@@ -119,6 +163,32 @@
         input.focus();
       });
   };
+
+  function hideNudge() {
+    if (nudge && nudge.parentNode) nudge.parentNode.removeChild(nudge);
+    nudge = null;
+    try { sessionStorage.setItem("vss-nudge-" + BUSINESS, "1"); } catch (e) {}
+  }
+
+  function sessionGet(key) {
+    try { return sessionStorage.getItem(key); } catch (e) { return null; }
+  }
+
+  // Closed before the opening hour, from the closing hour on, and on the closed days (in the shop's time zone).
+  function isClosed() {
+    try {
+      var parts = new Intl.DateTimeFormat("en-US", { timeZone: TIMEZONE, weekday: "short", hour: "numeric", hourCycle: "h23" })
+        .formatToParts(new Date());
+      var day = "", hour = 12;
+      parts.forEach(function (p) {
+        if (p.type === "weekday") day = p.value.slice(0, 3).toLowerCase();
+        if (p.type === "hour") hour = Number(p.value);
+      });
+      return CLOSED_DAYS.indexOf(day) !== -1 || hour < OPEN_HOUR || hour >= CLOSE_HOUR;
+    } catch (e) {
+      return false; // if the browser can't tell, behave as open
+    }
+  }
 
   function setBusy(on) {
     busy = on;
