@@ -164,18 +164,18 @@
     ["Texas Lone Star AC & Heating", "Brownsville", "AC", "(956) 621-0541", "ok", "Checked: Yelp and Facebook agree", "Says it takes emergency calls 24 hours", "txlonestaracandheating.com"],
     ["Dew Point Air Conditioning", "Brownsville", "AC", "(956) 312-2100", "warn", "Checked: Yelp only", "", "Yelp listing"],
     ["Texas Cool Works", "Brownsville", "AC", "(956) 303-0257", "warn", "Three numbers found: 303-0257, 465-2956, 266-2286. Ask which is right.", "", "Carrier dealer page"],
-    ["Bud's Quality Plumbing", "Harlingen and Brownsville", "Plumbing", "", "none", "No number yet. Look it up before calling.", "", "search the name online"],
-    ["Brownsville Plumbing Co", "Brownsville", "Plumbing", "", "none", "No number yet. Look it up before calling.", "", "brownsvilleplumbingco.com"],
-    ["Robert's Repair Plumbing", "Brownsville", "Plumbing", "", "none", "No number yet. Look it up before calling.", "", "search the name online"],
+    ["Bud's Quality Plumbing", "Harlingen and Brownsville", "Plumbing", "(956) 423-3421", "ok", "Checked: Yelp, MapQuest and Nextdoor agree", "", "bud.orear@att.net"],
+    ["Brownsville Plumbing Co", "Brownsville", "Plumbing", "(956) 496-0981", "ok", "Checked: matches their own website", "", "brownsvilleplumbingco.com"],
+    ["Robert's Repair Plumbing", "Brownsville", "Plumbing", "(956) 203-9993 or (956) 410-5101", "warn", "Two numbers found. Yelp says 203-9993, their Facebook page also shows 410-5101. Try 203-9993 first.", "", "apr231979@gmail.com"],
     ["Polar Air South Texas", "Pharr", "AC", "(956) 702-7375", "warn", "From an earlier search, not double checked", "", "Facebook page"],
     ["Mission Air Conditioning", "McAllen and Mission", "AC", "(956) 477-4967", "warn", "From an earlier search, not double checked. They already invite texts.", "", "missionaircon.com"],
     ["Imperial Air LLC", "Edinburg", "AC", "(956) 566-3406", "warn", "From an earlier search, not double checked", "", "Facebook page"],
     ["Cytech Heating & Cooling", "McAllen", "AC", "(956) 553-3265", "warn", "From an earlier search, not double checked", "", "cytechheatingandcooling.com"],
-    ["Valley Modern Plumbing", "McAllen", "Plumbing", "", "none", "No number yet. Look it up before calling.", "", "valleymodernplumbing.com"],
-    ["ColdWil HVAC", "McAllen, Pharr, Edinburg", "AC", "", "none", "No number yet. Look it up before calling.", "", "coldwilhvac.com"],
-    ["Gomez HVAC Services", "Mission", "AC", "", "none", "No number yet. Look it up before calling.", "", "Houzz listing"],
-    ["Mortech AC and Refrigeration", "Donna", "AC", "", "none", "No number yet. Look it up before calling.", "", "Yellow Pages listing"],
-    ["Diego's Plumbing", "Weslaco", "Plumbing", "", "none", "No number yet. Look it up before calling.", "", "Yelp listing"]
+    ["Valley Modern Plumbing", "McAllen", "Plumbing", "(956) 686-3687", "ok", "Checked: their website, Yelp and Procore agree. They already take texts.", "", "valleymodernplumbing.com"],
+    ["ColdWil HVAC", "McAllen, Pharr, Edinburg", "AC", "(956) 997-9352", "ok", "Checked: matches their own website", "Says open 7 days, 24/7 emergency service", "coldwilhvac.com"],
+    ["Gomez HVAC Services", "Mission", "AC", "(956) 379-2691 or (956) 233-8765", "warn", "Two numbers found. Yelp says 379-2691, a Facebook post says 233-8765. Try the Yelp one first.", "", "Houzz listing"],
+    ["Mortech AC and Refrigeration", "Donna", "AC", "(956) 926-9098", "warn", "Checked: their Facebook page only. A Yelp search page showed 464-8534, which may belong to a different business.", "", "Facebook page"],
+    ["Diego's Plumbing", "Weslaco", "Plumbing", "(956) 686-1353", "warn", "Checked: Yelp only", "", "Yelp listing"]
   ];
   var STATUS = [["new", "Not called"], ["noanswer", "No answer"], ["voicemail", "Left voicemail"], ["talked", "Talked"], ["demo", "Demo set"], ["trial", "Free trial"], ["paying", "Paying"], ["no", "Said no"]];
 
@@ -188,7 +188,7 @@
     { id: "scripts", text: "Phone script, call list, videos and Facebook post made", done: true, group: "Done" },
     { id: "twilio", text: "Upgrade Twilio and get texting approved by the phone carriers", cost: "Costs money: about $20 to start plus about $19.50 per shop. Approval takes about a week.", group: "Before texting is live" },
     { id: "facts", text: "Replace the sample facts for the demo shop with real answers", group: "Before texting is live" },
-    { id: "numbers", text: "Find the 8 missing phone numbers on the call list", group: "Before selling" },
+    { id: "numbers", text: "Find phone numbers for all 22 shops (a few still need a double check before you call)", done: true, group: "Before selling" },
     { id: "calls5", text: "Call the first 5 Harlingen shops", group: "Before selling" },
     { id: "demo1", text: "Give the first demo", group: "Before selling" },
     { id: "trial1", text: "Start the first free trial", group: "Before selling" },
