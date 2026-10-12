@@ -22,7 +22,7 @@
   </style>
 </head>
 <body>
-  <header><div class="wrap"><strong>Valley Smart Services</strong> &nbsp;·&nbsp; Harlingen, TX</div></header>
+  <header><div class="wrap"><strong id="shop-name">Valley Smart Services</strong> &nbsp;·&nbsp; <span id="shop-place">Harlingen, TX</span></div></header>
   <section class="hero">
     <div class="wrap">
       <h1>Heating, cooling, plumbing and electrical across the Valley.</h1>
@@ -38,7 +38,30 @@
     </div>
   </main>
 
-  <!-- This one line is all a website needs to add the chat box. -->
-  <script src="widget.js" data-business="valley-smart-services" data-endpoint="https://hlzmldcebgoeyxmrefcw.supabase.co/functions/v1/web-chat"></script>
+  <!--
+    A real website only needs one line:
+      <script src="widget.js" data-business="your-business-id" data-endpoint="https://hlzmldcebgoeyxmrefcw.supabase.co/functions/v1/web-chat"></script>
+    This demo page builds that line from the address, so one page can show any shop's name:
+      demo.html?shop=garza-plumbing&name=Garza%20Plumbing
+    (shop is the business id; name is what the chat box and page header show.)
+  -->
+  <script>
+    (function () {
+      var q = new URLSearchParams(location.search);
+      var shop = (q.get("shop") || "valley-smart-services").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 60);
+      var name = (q.get("name") || "").slice(0, 60);
+      if (name) {
+        document.title = name + " | Chat demo";
+        document.getElementById("shop-name").textContent = name;
+        document.getElementById("shop-place").textContent = "Chat demo";
+      }
+      var s = document.createElement("script");
+      s.src = "widget.js";
+      s.setAttribute("data-business", shop);
+      s.setAttribute("data-endpoint", "https://hlzmldcebgoeyxmrefcw.supabase.co/functions/v1/web-chat");
+      if (name) s.setAttribute("data-title", name);
+      document.body.appendChild(s);
+    })();
+  </script>
 </body>
 </html>
