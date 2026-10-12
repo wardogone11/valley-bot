@@ -212,6 +212,8 @@
       top.appendChild(el("span", "badge b-" + k, LABEL[k]));
       s.appendChild(top);
       s.appendChild(el("div", "issue", l.issue || "Problem not described yet"));
+      if (l.urgency_note) s.appendChild(el("div", "issue", "Heads up: " + l.urgency_note));
+      if (l.preferred_time) s.appendChild(el("div", "meta", "Best time: " + l.preferred_time));
 
       var meta = el("div", "meta");
       var phone = l.callback_phone || (l.channel === "sms" ? prettyPhone(l.phone) : null);
