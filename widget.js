@@ -16,6 +16,7 @@
   var script = document.currentScript;
   var ENDPOINT = script.getAttribute("data-endpoint");
   var BUSINESS = script.getAttribute("data-business");
+  var PHOTO_ENDPOINT = script.getAttribute("data-photo-endpoint") || ENDPOINT.replace(/web-chat\/?$/, "web-photo");
   var TITLE = script.getAttribute("data-title") || "Valley Smart Services";
   var COLOR = script.getAttribute("data-color") || "#0b6e4f";
   var OPEN_HOUR = Number(script.getAttribute("data-hours-open") || 8);
@@ -57,6 +58,7 @@
     ".vss-form input{flex:1;border:0;padding:14px;font:inherit;outline:none;min-width:0}",
     ".vss-form button{border:0;background:none;color:" + COLOR + ";font-weight:600;padding:0 16px;cursor:pointer;font:inherit}",
     ".vss-form button:disabled{opacity:.4;cursor:default}",
+    ".vss-form .vss-clip{padding:0 6px 0 12px;font-size:20px;line-height:1}",
     ".vss-nudge{position:fixed;right:20px;bottom:92px;max-width:260px;background:#fff;color:#1d1d1f;border-radius:14px;padding:12px 34px 12px 14px;",
     "box-shadow:0 8px 30px rgba(0,0,0,.25);z-index:2147483000;font:14px/1.4 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;cursor:pointer}",
     ".vss-nx{position:absolute;top:4px;right:6px;background:none;border:0;font-size:20px;line-height:1;color:#5f6368;cursor:pointer}",
@@ -96,6 +98,16 @@
   var send = el("button");
   send.type = "submit";
   send.textContent = "Send";
+  var clip = el("button", "vss-clip");
+  clip.type = "button";
+  clip.textContent = "\uD83D\uDCCE";
+  clip.setAttribute("aria-label", "Attach a photo / Adjuntar una foto");
+  var pick = el("input");
+  pick.type = "file";
+  pick.accept = "image/*";
+  pick.style.display = "none";
+  form.appendChild(clip);
+  form.appendChild(pick);
   form.appendChild(input);
   form.appendChild(send);
 
@@ -193,6 +205,59 @@
   function setBusy(on) {
     busy = on;
     send.disabled = on;
+    clip.disabled = on || !hasStarted();
+  }
+
+  // Photos attach to a chat that already started (the shop needs a lead to attach them to).
+  function hasStarted() {
+    return state.messages.some(function (m) { return m.from === "me"; });
+  }
+  clip.disabled = !hasStarted();
+
+  clip.onclick = function () { if (!clip.disabled) pick.click(); };
+  pick.onchange = function () {
+    var file = pick.files && pick.files[0];
+    pick.value = "";
+    if (!file || busy) return;
+    setBusy(true);
+    var typing = addBubble("bot", "\u2026", "vss-typing");
+    shrink(file)
+      .then(function (blob) {
+        var data = new FormData();
+        data.append("businessId", BUSINESS);
+        data.append("sessionId", state.sessionId);
+        data.append("photo", blob, "photo.jpg");
+        return fetch(PHOTO_ENDPOINT, { method: "POST", body: data }).then(function (r) { return r.json(); });
+      })
+      .then(function (data) { return { ok: !!data.ok, reply: data.reply || "Sorry, we couldn't get that photo. / Disculpa, no pudimos recibir la foto." }; })
+      .catch(function () { return { ok: false, reply: "We couldn't send that photo. Please try another one. / No pudimos enviar esa foto. Prueba con otra." }; })
+      .then(function (res) {
+        log.removeChild(typing);
+        if (res.ok) { remember("me", "\uD83D\uDCF7 Photo sent / Foto enviada"); addBubble("me", "\uD83D\uDCF7 Photo sent / Foto enviada"); }
+        remember("bot", res.reply);
+        addBubble("bot", res.reply);
+        setBusy(false);
+      });
+  };
+
+  // Redraws the picture smaller as a plain JPEG. That keeps the upload small and also drops the
+  // hidden location data phones put inside photos.
+  function shrink(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        var scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+        var c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(img.width * scale));
+        c.height = Math.max(1, Math.round(img.height * scale));
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        c.toBlob(function (blob) { blob ? resolve(blob) : reject(new Error("no image")); }, "image/jpeg", 0.8);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("not an image")); };
+      img.src = url;
+    });
   }
 
   function addBubble(from, text, extra) {
