@@ -1,0 +1,856 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#05211c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Valley Bot HQ">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<title>Valley Bot HQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@700;900&family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@500&display=swap">
+<style>
+  /* Layout: one phone-first app. A sticky title bar with a scrolling tab row, one section at a time, cards with copy buttons. */
+  :root {
+    --bg: #f2f4f1; --card: #ffffff; --ink: #10231c; --muted: #5a6a62; --line: #dde3de;
+    --brand: #0b6e4f; --brand-ink: #ffffff; --sun: #ffb21f; --sun-ink: #241500;
+    --warn: #b45309; --warn-bg: #fff4e5; --bad: #c62828; --bad-bg: #fdecea; --good: #1b7f3b; --good-bg: #e7f6ec; --chip: #e8eee9;
+    --display: "Red Hat Display", "Segoe UI", system-ui, sans-serif;
+    --body: "Red Hat Text", "Segoe UI", system-ui, sans-serif;
+    --mono: "Red Hat Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1512; --card: #15201b; --ink: #e8f1ec; --muted: #9fb1a7; --line: #26362e;
+      --brand: #46c194; --brand-ink: #04140e; --warn: #f5a524; --warn-bg: #3a2c14; --bad: #ff7a7a; --bad-bg: #3a1d1d;
+      --good: #4cc777; --good-bg: #173323; --chip: #1d2b25; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1512; --card: #15201b; --ink: #e8f1ec; --muted: #9fb1a7; --line: #26362e;
+    --brand: #46c194; --brand-ink: #04140e; --warn: #f5a524; --warn-bg: #3a2c14; --bad: #ff7a7a; --bad-bg: #3a1d1d;
+    --good: #4cc777; --good-bg: #173323; --chip: #1d2b25; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); padding-inline: 16px; padding-block: 0 48px; }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; }
+  p { margin: 0; }
+  a { color: var(--brand); }
+  button, select, textarea, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
+
+  header.top { position: sticky; top: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 5; padding-block: 12px 8px; margin-inline: -16px; padding-inline: 16px; border-bottom: 1px solid var(--line); }
+  .title-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .title-row h1 { font-size: 26px; font-weight: 900; letter-spacing: -0.01em; }
+  .pill { font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--warn-bg); color: var(--warn); }
+  .pill.live { background: var(--good-bg); color: var(--good); }
+  nav.tabs { display: flex; gap: 8px; overflow-x: auto; padding-block: 10px 4px; scrollbar-width: thin; }
+  nav.tabs button { flex: none; border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 7px 16px; font-weight: 700; cursor: pointer; }
+  nav.tabs button[aria-selected="true"] { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+
+  main { padding-block: 18px; display: grid; gap: 14px; }
+  section.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 10px; min-width: 0; }
+  section.card h2 { font-size: 20px; font-weight: 900; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .stat { background: var(--chip); border-radius: 10px; padding: 12px; min-width: 0; }
+  .stat b { display: block; font: 900 26px/1.1 var(--display); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .stat span { color: var(--muted); font-size: 13px; }
+  .next { background: var(--sun); color: var(--sun-ink); border-radius: 14px; padding: 16px; display: grid; gap: 6px; }
+  .next small { font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 12px; }
+  .next b { font: 900 22px/1.2 var(--display); }
+  .remind { border-left: 5px solid var(--warn); background: var(--warn-bg); border-radius: 8px; padding: 10px 12px; }
+  .remind.bad { border-color: var(--bad); background: var(--bad-bg); }
+
+  .btn { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 8px 14px; font-weight: 700; cursor: pointer; text-decoration: none; color: var(--ink); display: inline-block; }
+  .btn.primary { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+  .btn.small { padding: 5px 10px; font-size: 13px; }
+  .btn.danger { color: var(--bad); }
+
+  .copyblock { background: var(--chip); border-radius: 10px; padding: 12px; display: grid; gap: 8px; min-width: 0; justify-items: start; }
+  .copyblock .label { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .copyblock .txt { white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; width: 100%; }
+  .copyblock .txt.mono { font: 500 14px/1.5 var(--mono); }
+
+  .lang { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+  .lang button { border: 0; background: var(--card); padding: 5px 14px; font-weight: 700; cursor: pointer; }
+  .lang button[aria-pressed="true"] { background: var(--brand); color: var(--brand-ink); }
+
+  details { border-top: 1px solid var(--line); padding-block: 8px; }
+  details:first-of-type { border-top: 0; }
+  details summary { cursor: pointer; font-weight: 700; }
+  details > div { padding-top: 8px; display: grid; gap: 8px; }
+
+  .item { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 8px; min-width: 0; }
+  .item .name { font: 900 17px/1.2 var(--display); }
+  .item .phone { font: 500 18px/1.2 var(--mono); user-select: text; }
+  .tag { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--chip); color: var(--muted); }
+  .tag.warn { background: var(--warn-bg); color: var(--warn); }
+  .tag.bad { background: var(--bad-bg); color: var(--bad); }
+  .tag.good { background: var(--good-bg); color: var(--good); }
+  input[type=text], input[type=number], input[type=date], input[type=email], select, textarea { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 8px; min-width: 0; }
+  textarea { min-height: 64px; resize: vertical; }
+  .fields { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+  .field { display: grid; gap: 3px; min-width: 0; }
+  .field label { font-size: 12px; font-weight: 700; color: var(--muted); }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chips button { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 5px 12px; font-weight: 700; cursor: pointer; font-size: 14px; }
+  .chips button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  .task { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+  .task:first-of-type { border-top: 0; }
+  .task input { width: 22px; height: 22px; margin-top: 2px; flex: none; accent-color: var(--brand); }
+  .task label { display: grid; gap: 2px; cursor: pointer; }
+  .task .done { text-decoration: line-through; color: var(--muted); }
+  .cost { font-size: 12px; font-weight: 700; color: var(--warn); }
+
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 8px; border-top: 1px solid var(--line); vertical-align: top; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .scroll { overflow-x: auto; }
+  .price { font: 900 34px/1 var(--display); font-variant-numeric: tabular-nums; }
+  .price small { font: 500 15px var(--body); color: var(--muted); }
+  .in { color: var(--good); } .out { color: var(--bad); }
+  .empty { color: var(--muted); text-align: center; padding: 18px 0; }
+  @media (prefers-reduced-motion: no-preference) { .btn, nav.tabs button { transition: background-color .15s, color .15s; } }
+</style>
+<style>html, body { background: var(--bg); } body { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="title-row"><h1>Valley Bot HQ</h1><span class="pill" id="status">Not live yet</span></div>
+    <nav class="tabs" id="tabs" role="tablist" aria-label="Sections"></nav>
+  </header>
+  <main id="main"></main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  // el("div", {class: "x", onclick: fn}, child, child) builds DOM safely: text is never read as HTML.
+  function el(tag, props) {
+    var n = document.createElement(tag);
+    if (props) for (var k in props) {
+      if (k === "class") n.className = props[k];
+      else if (k === "text") n.textContent = props[k];
+      else if (k.slice(0, 2) === "on") n[k] = props[k];
+      else n.setAttribute(k, props[k]);
+    }
+    for (var i = 2; i < arguments.length; i++) { var c = arguments[i]; if (c == null || c === false) continue; n.appendChild(typeof c === "string" ? document.createTextNode(c) : c); }
+    return n;
+  }
+
+  // ================================================================= content
+  var SITE = "https://wardogone11.github.io/valley-bot/";
+  var FOLDER = "your bot project folder";
+  var EMAIL = "wardogone11@gmail.com";
+
+  var CALLS = [
+    ["Angels Cooling", "Harlingen", "AC", "(956) 200-9195", "ok", "Checked: matches their own website", "", "angelscooling.com"],
+    ["Advill Air Conditioning", "Harlingen", "AC", "(956) 428-0286", "ok", "Checked: their website and Yelp", "", "advillac@gmail.com"],
+    ["General HVAC LLC", "Harlingen", "AC", "(956) 343-7712", "ok", "Checked: matches their own website", "", "genacr.com"],
+    ["AIRS Co., Inc.", "Harlingen", "AC", "(956) 423-5446", "ok", "Checked: their website and BBB", "Mon to Fri 7:30 AM to 5 PM, Sat 8 AM to 12 PM", "airsco.com"],
+    ["Texas Air Conditioning", "Harlingen", "AC", "(956) 518-5427", "ok", "Checked: their website, Yelp and Facebook", "Yelp: Mon and Tue 9 AM to 6 PM", "info@carrierdealers.net"],
+    ["Benny's Heating & Cooling", "Harlingen", "AC", "(956) 423-2847", "ok", "Checked: Yelp and Facebook agree", "", "benito@bennysheatingcooling.com"],
+    ["Snyder Air Conditioning", "Harlingen", "AC", "(956) 425-0175 or (956) 428-6603", "warn", "Two numbers found. Website says 425-0175, Yelp says 428-6603. Try the website one first.", "", "snyderair.com"],
+    ["Texas Lone Star AC & Heating", "Brownsville", "AC", "(956) 621-0541", "ok", "Checked: Yelp and Facebook agree", "Says it takes emergency calls 24 hours", "txlonestaracandheating.com"],
+    ["Dew Point Air Conditioning", "Brownsville", "AC", "(956) 312-2100", "warn", "Checked: Yelp only", "", "Yelp listing"],
+    ["Texas Cool Works", "Brownsville", "AC", "(956) 303-0257", "warn", "Three numbers found: 303-0257, 465-2956, 266-2286. Ask which is right.", "", "Carrier dealer page"],
+    ["Bud's Quality Plumbing", "Harlingen and Brownsville", "Plumbing", "", "none", "No number yet. Look it up before calling.", "", "search the name online"],
+    ["Brownsville Plumbing Co", "Brownsville", "Plumbing", "", "none", "No number yet. Look it up before calling.", "", "brownsvilleplumbingco.com"],
+    ["Robert's Repair Plumbing", "Brownsville", "Plumbing", "", "none", "No number yet. Look it up before calling.", "", "search the name online"],
+    ["Polar Air South Texas", "Pharr", "AC", "(956) 702-7375", "warn", "From an earlier search, not double checked", "", "Facebook page"],
+    ["Mission Air Conditioning", "McAllen and Mission", "AC", "(956) 477-4967", "warn", "From an earlier search, not double checked. They already invite texts.", "", "missionaircon.com"],
+    ["Imperial Air LLC", "Edinburg", "AC", "(956) 566-3406", "warn", "From an earlier search, not double checked", "", "Facebook page"],
+    ["Cytech Heating & Cooling", "McAllen", "AC", "(956) 553-3265", "warn", "From an earlier search, not double checked", "", "cytechheatingandcooling.com"],
+    ["Valley Modern Plumbing", "McAllen", "Plumbing", "", "none", "No number yet. Look it up before calling.", "", "valleymodernplumbing.com"],
+    ["ColdWil HVAC", "McAllen, Pharr, Edinburg", "AC", "", "none", "No number yet. Look it up before calling.", "", "coldwilhvac.com"],
+    ["Gomez HVAC Services", "Mission", "AC", "", "none", "No number yet. Look it up before calling.", "", "Houzz listing"],
+    ["Mortech AC and Refrigeration", "Donna", "AC", "", "none", "No number yet. Look it up before calling.", "", "Yellow Pages listing"],
+    ["Diego's Plumbing", "Weslaco", "Plumbing", "", "none", "No number yet. Look it up before calling.", "", "Yelp listing"]
+  ];
+  var STATUS = [["new", "Not called"], ["noanswer", "No answer"], ["voicemail", "Left voicemail"], ["talked", "Talked"], ["demo", "Demo set"], ["trial", "Free trial"], ["paying", "Paying"], ["no", "Said no"]];
+
+  var TASKS = [
+    { id: "bot", text: "Bot built and tested (28 of 28 tests)", done: true, group: "Done" },
+    { id: "site", text: "Public site, privacy policy and texting terms online", done: true, group: "Done" },
+    { id: "demo", text: "Demo kit: personalized demo page and demo script", done: true, group: "Done" },
+    { id: "price", text: "Starter price decided: $175 a month", done: true, group: "Done" },
+    { id: "terms", text: "Terms decided: month to month, no card until the trial ends", done: true, group: "Done" },
+    { id: "scripts", text: "Phone script, call list, videos and Facebook post made", done: true, group: "Done" },
+    { id: "twilio", text: "Upgrade Twilio and get texting approved by the phone carriers", cost: "Costs money: about $20 to start plus about $19.50 per shop. Approval takes about a week.", group: "Before texting is live" },
+    { id: "facts", text: "Replace the sample facts for the demo shop with real answers", group: "Before texting is live" },
+    { id: "numbers", text: "Find the 8 missing phone numbers on the call list", group: "Before selling" },
+    { id: "calls5", text: "Call the first 5 Harlingen shops", group: "Before selling" },
+    { id: "demo1", text: "Give the first demo", group: "Before selling" },
+    { id: "trial1", text: "Start the first free trial", group: "Before selling" },
+    { id: "stripe", text: "Turn on real invoicing in Stripe (it is in test mode today)", cost: "Needed before the first invoice.", group: "Before the first paid client" },
+    { id: "yes", text: "Send the terms in writing and get a written \"yes, I agree\" before each trial", group: "Before the first paid client" },
+    { id: "lawyer", text: "Talk to a Texas lawyer and an accountant (including about an LLC)", cost: "Costs money. This is not legal advice.", group: "Before the first paid client" },
+    { id: "spanish", text: "Have a native Spanish speaker check the Spanish terms", group: "Before the first paid client" },
+    { id: "data", text: "Decide what happens to a shop's leads after they cancel", group: "Before the first paid client" },
+    { id: "bank", text: "Open a separate bank account for the business, and log every dollar in the Money tab", group: "Before the first paid client" },
+    { id: "pro", text: "Decide a setup fee or minimum for Pro, after timing one setup", group: "Later" },
+    { id: "pay1", text: "First paying client", group: "Later" }
+  ];
+
+  var FB = {
+    English: "Your customers text at 9 PM. Who answers?\nValley Bot answers your texts and website chats in English or Spanish, day or night.\nIt gets the name, phone, address and what is wrong, and hands you a lead that is ready to schedule.\nIf it is an emergency, like a gas smell or a flood, you get an alert right away.\nBuilt here in the Valley for AC, plumbing and electrical shops.\nTry it free for 14 days. Message me or email wardogone11@gmail.com and I will show you how it works.\n#RioGrandeValley #HVAC #Plumbing #SmallBusiness #Harlingen",
+    "Español": "Tus clientes escriben a las 9 de la noche. ¿Quién les contesta?\nValley Bot contesta tus mensajes de texto y los chats de tu página web en inglés o en español, de día o de noche.\nJunta el nombre, el teléfono, la dirección y el problema, y te entrega el cliente listo para agendar.\nSi es una emergencia, como olor a gas o una inundación, te llega una alerta al instante.\nHecho aquí en el Valle para talleres de aire acondicionado, plomería y electricidad.\nPruébalo gratis por 14 días. Escríbeme o manda un correo a wardogone11@gmail.com y te enseño cómo funciona.\n#ValleDelRioGrande #AireAcondicionado #Plomeria #NegocioLocal #Harlingen",
+    Spanglish: "Tus clientes te escriben a las 9 PM y nobody answers?\nValley Bot contesta en inglés, español o Spanglish, de día o de noche.\nTe junta el nombre, el teléfono, la dirección y el problema, y te manda el lead listo para agendar.\n¿Emergencia? Gas smell, flood, lo que sea: te llega la alerta right away.\nHecho aquí en el Valle para AC, plumbing y electrical shops.\n14 días gratis. Mándame un mensaje o un email a wardogone11@gmail.com y te enseño.\n#RGV #HVAC #Plumbing #ValleDelRioGrande #NegocioLocal"
+  };
+
+  var VIDEOS = [
+    ["valley-bot-tour-vertical.mp4", "Feature tour, 63 seconds, vertical, 5 MB, with music", "Show it on an iPhone. Post it on Facebook or as a Reel."],
+    ["valley-bot-tour-widescreen.mp4", "Feature tour, 63 seconds, widescreen, 3 MB, with music", "Show it live on a laptop, a TV or a projector."],
+    ["valley-bot-tour-email.mp4", "Feature tour, 63 seconds, widescreen, 2 MB, with music", "Attach it to an email. It is small enough for any email."],
+    ["valley-bot-tour-vertical-silent.mp4", "Feature tour, 63 seconds, vertical, no sound", "Use in CapCut when you want your own music or voice."],
+    ["valley-bot-ad-long.mp4", "Ad, 38 seconds, vertical, with music", "A shorter social ad."],
+    ["valley-bot-ad.mp4", "Ad, 22 seconds, vertical, with music", "The shortest social ad."]
+  ];
+  var TOUR = ["The hook: your customers text at 9 PM, who answers?", "A Spanglish chat that becomes a finished lead", "An emergency alert", "Knows what is urgent: best time and a heads up note", "Answers from the shop's own facts", "After hours: the website still answers", "Every lead on one page", "Weekly results (example numbers)", "Only jobs in your area", "The Pro plan connection to Housecall Pro or Jobber", "The offer: free 14 day trial and your email"];
+
+  var TERMS = {
+    en: "Month to month, no contract. Your 14 day free trial starts the day texting works for your shop, and no card is needed to start. We text or email you 3 days before the trial ends, and you can stop with no charge. If you stay, it is $175 a month, and we send you an invoice for the first month when the trial ends, then every month on the same date. To cancel, email wardogone11@gmail.com any time before your next charge and I will confirm in writing. You keep service through the month you paid for. If a problem is our fault, we will make it right, including a refund for the affected days. If you cancel within 3 days of your first charge, we refund it.",
+    es: "Mes a mes, sin contrato. Su prueba gratis de 14 días empieza el día en que los mensajes de texto funcionan para su negocio, y no se necesita tarjeta para empezar. Le avisamos por texto o por correo 3 días antes de que termine la prueba, y puede parar sin ningún cargo. Si se queda, son $175 al mes, y le mandamos una factura del primer mes cuando termine la prueba, y luego cada mes en la misma fecha. Para cancelar, escriba a wardogone11@gmail.com en cualquier momento antes de su próximo cobro y yo se lo confirmo por escrito. Usted conserva el servicio hasta el final del mes que pagó. Si el problema es nuestro, lo arreglamos, incluso con un reembolso por los días afectados. Si cancela dentro de los 3 días de su primer cobro, se lo reembolsamos."
+  };
+
+  var SCRIPT = {
+    en: {
+      blocks: [
+        ["Opener (10 seconds)", "Hi, is this the owner or the person who handles customer calls? My name is Ove Garcia. I'm from the Valley, and I'm not selling anything on this call. I have two quick questions about how you handle customers who message you at night. Do you have two minutes?"],
+        ["The three questions (listen, do not talk)", "1. When a customer calls or texts you at night or on a weekend and nobody answers, what happens?\n2. About how much is one lost job worth to you?\n3. Who answers your customers after 6 PM today?\nAfter each answer say: Got it, thank you."],
+        ["The pitch (20 seconds, only after they answer)", "I built something for shops like yours. It answers your customers' texts and website chats in English or Spanish, day or night. It gets the name, phone, address and what is wrong, and hands you a lead that is ready to schedule. If it is an emergency, like a gas smell, you get an alert right away."],
+        ["The ask", "Can I show you on my phone? It takes 2 minutes. I can stop by, or I can send you a link and a 1 minute video right now. It is free for 14 days. At the end we look at the results together and you decide."],
+        ["Close", "Thank you for your time. I will send the link today. Is it okay if I follow up once next week?"],
+        ["Voicemail (only leave one)", "Hi, this is Ove Garcia from the Valley. I built a way for shops to answer customers' texts and website chats in English and Spanish, even at night. I would like to show you in 2 minutes. You can email me at wardogone11@gmail.com. Again, Ove Garcia, wardogone11@gmail.com. Thank you."]
+      ],
+      objections: [
+        ["My customers call, they do not text.", "That is true for a lot of shops. This does not answer phone calls. It catches the texts and website messages that come when nobody can answer, mostly at night. How many do you think you miss?"],
+        ["How much is it?", "It is $175 a month. And it is free for 14 days first, so you see it work before you pay anything. No card is needed to start."],
+        ["Can I cancel?", "Yes, any time. It is month to month with no contract, and no card is needed to start. You email me before your next charge and I confirm it in writing. I send you the terms in writing before the trial starts."],
+        ["I already have a receptionist or an answering service.", "That is great. This is for after hours and busy times. It does not replace anyone."],
+        ["Is it a robot?", "Yes, it is an automated assistant and it tells customers that. It gets the information, then your team takes over for the real conversation."],
+        ["How does it work with my customers?", "It starts with the chat box on your website. Texting on your own number is set up after you say yes, and the phone carriers take about a week to approve it."],
+        ["Send me information.", "Sure. What is your email? I will send a 1 minute video today and call you in a few days."],
+        ["Not interested.", "No problem. Thank you for your time. (Stop. Do not push. Write it down.)"]
+      ]
+    },
+    es: {
+      blocks: [
+        ["Para empezar (10 segundos)", "Buenos días, ¿hablo con el dueño o con la persona que atiende a los clientes? Me llamo Ove Garcia, soy del Valle, y no le estoy vendiendo nada en esta llamada. Tengo dos preguntas rápidas sobre cómo atiende a los clientes que le escriben de noche. ¿Tiene dos minutos?"],
+        ["Las tres preguntas (escuche, no hable)", "1. Cuando un cliente le llama o le escribe de noche o en fin de semana y nadie contesta, ¿qué pasa?\n2. Más o menos, ¿cuánto vale para usted un trabajo que se pierde?\n3. ¿Quién contesta a sus clientes después de las 6 de la tarde?\nDespués de cada respuesta diga: Entiendo, gracias."],
+        ["Lo que ofrece (20 segundos, solo después de que respondan)", "Hice algo para talleres como el suyo. Contesta los mensajes de texto y los chats de su página web en inglés o en español, de día o de noche. Junta el nombre, el teléfono, la dirección y el problema, y le entrega el cliente listo para agendar. Si es una emergencia, como olor a gas, le llega una alerta al instante."],
+        ["La petición", "¿Le puedo enseñar en mi teléfono? Toma 2 minutos. Puedo pasar por su negocio, o le mando ahorita un enlace y un video de 1 minuto. Es gratis por 14 días. Al final vemos los resultados juntos y usted decide."],
+        ["Para terminar", "Gracias por su tiempo. Le mando el enlace hoy. ¿Está bien si le doy seguimiento una vez la próxima semana?"],
+        ["Mensaje de voz (deje solo uno)", "Buenos días, habla Ove Garcia, del Valle. Hice una forma de contestar los mensajes de texto y los chats de la página web de los clientes en inglés y en español, hasta de noche. Me gustaría enseñárselo en 2 minutos. Me puede escribir a wardogone11@gmail.com. Otra vez, Ove Garcia, wardogone11@gmail.com. Gracias."]
+      ],
+      objections: [
+        ["Mis clientes llaman, no escriben.", "Es cierto en muchos talleres. Esto no contesta llamadas. Atrapa los mensajes de texto y de la página web que llegan cuando nadie puede contestar, sobre todo de noche. ¿Cuántos cree que se le pierden?"],
+        ["¿Cuánto cuesta?", "Son $175 al mes. Y es gratis por 14 días primero, para que lo vea funcionar antes de pagar nada. No se necesita tarjeta para empezar."],
+        ["¿Puedo cancelar?", "Sí, cuando quiera. Es mes a mes, sin contrato, y no se necesita tarjeta para empezar. Usted me escribe antes de su próximo cobro y yo se lo confirmo por escrito. Le mando los términos por escrito antes de que empiece la prueba."],
+        ["Ya tengo recepcionista o servicio de contestadora.", "Qué bueno. Esto es para fuera de horario y cuando están muy ocupados. No reemplaza a nadie."],
+        ["¿Es un robot?", "Sí, es un asistente automático y se lo dice a los clientes. Junta la información, y luego su equipo se encarga de la conversación de verdad."],
+        ["¿Cómo funciona con mis clientes?", "Empieza con el chat de su página web. El servicio de mensajes de texto en su propio número se prepara cuando usted diga que sí, y las compañías de teléfono tardan como una semana en aprobarlo."],
+        ["Mándeme información.", "Claro. ¿Cuál es su correo? Hoy le mando un video de 1 minuto y le llamo en unos días."],
+        ["No me interesa.", "No hay problema. Gracias por su tiempo. (Pare. No insista. Anótelo.)"]
+      ]
+    }
+  };
+
+  var SIGN_EN = "\n\nOve Garcia\nwardogone11@gmail.com";
+  var SIGN_ES = "\n\nOve Garcia\nwardogone11@gmail.com";
+  var EMAILS = [
+    { title: "After a call: send the demo", en: {
+        subject: "The 2 minute demo we talked about",
+        body: "Hi [Name],\n\nThank you for taking my call. Here is the demo I mentioned. Open it on your phone and type like a customer would:\n[demo link]\n\nAnd a 1 minute video that shows what it does:\n[video link or attached]\n\nIt answers your customers' texts and website chats in English or Spanish, day or night, and hands you a lead that is ready to schedule. It does not answer phone calls.\n\nIt is free for 14 days, and no card is needed. After that it is $175 a month, month to month.\n\nIf you want to try it, just reply to this email." + SIGN_EN },
+      es: {
+        subject: "La demostración de 2 minutos que platicamos",
+        body: "Hola [Nombre]:\n\nGracias por atender mi llamada. Aquí está la demostración que le mencioné. Ábrala en su teléfono y escriba como lo haría un cliente:\n[enlace de la demostración]\n\nY un video de 1 minuto que muestra lo que hace:\n[enlace del video o adjunto]\n\nContesta los mensajes de texto y los chats de su página web en inglés o en español, de día o de noche, y le entrega el cliente listo para agendar. No contesta llamadas.\n\nEs gratis por 14 días, y no se necesita tarjeta. Después son $175 al mes, mes a mes.\n\nSi quiere probarlo, solo conteste este correo." + SIGN_ES } },
+    { title: "Welcome to the trial, with the terms in writing", en: {
+        subject: "Your Valley Bot free trial and the terms",
+        body: "Hi [Name],\n\nThank you for trying Valley Bot. Here are the terms in writing, so we are both clear:\n\n" + TERMS.en + "\n\nPlease reply with \"Yes, I agree\" and I will set up your shop. I will email you when your trial starts and again 3 days before it ends." + SIGN_EN },
+      es: {
+        subject: "Su prueba gratis de Valley Bot y los términos",
+        body: "Hola [Nombre]:\n\nGracias por probar Valley Bot. Aquí están los términos por escrito, para que los dos estemos claros:\n\n" + TERMS.es + "\n\nPor favor conteste con \"Sí, estoy de acuerdo\" y preparo su negocio. Le escribo cuando empiece su prueba y otra vez 3 días antes de que termine." + SIGN_ES } },
+    { title: "3 days before the trial ends", en: {
+        subject: "Your free trial ends on [date]",
+        body: "Hi [Name],\n\nYour free trial ends on [date]. Here is what Valley Bot caught for you: [number] new customers, and [number] of them wrote after hours.\n\nIf you want to stay, you do not need to do anything. I will send an invoice for $175 for the first month when the trial ends.\n\nIf you would rather stop, just reply and I will cancel it with no charge." + SIGN_EN },
+      es: {
+        subject: "Su prueba gratis termina el [fecha]",
+        body: "Hola [Nombre]:\n\nSu prueba gratis termina el [fecha]. Esto es lo que Valley Bot atrapó para usted: [número] clientes nuevos, y [número] de ellos escribieron fuera de horario.\n\nSi quiere quedarse, no tiene que hacer nada. Le mando una factura de $175 por el primer mes cuando termine la prueba.\n\nSi prefiere parar, solo conteste y lo cancelo sin ningún cargo." + SIGN_ES } },
+    { title: "The first invoice", en: {
+        subject: "Your Valley Bot invoice",
+        body: "Hi [Name],\n\nThank you for trying Valley Bot. Your free trial has ended, and here is your invoice for the first month: $175, due [date]. [payment link or how to pay]\n\nYou can cancel any time before your next charge by emailing me, and I will confirm in writing. You keep service through the month you paid for.\n\nThank you for trusting a local business." + SIGN_EN },
+      es: {
+        subject: "Su factura de Valley Bot",
+        body: "Hola [Nombre]:\n\nGracias por probar Valley Bot. Su prueba gratis terminó, y aquí está su factura del primer mes: $175, con fecha de pago el [fecha]. [enlace de pago o cómo pagar]\n\nPuede cancelar en cualquier momento antes de su próximo cobro escribiéndome, y yo se lo confirmo por escrito. Usted conserva el servicio hasta el final del mes que pagó.\n\nGracias por confiar en un negocio local." + SIGN_ES } },
+    { title: "Confirming a cancellation", en: {
+        subject: "Your Valley Bot cancellation is confirmed",
+        body: "Hi [Name],\n\nThis confirms that I cancelled your Valley Bot service, as you asked on [date]. You will not be charged again. You keep service through [date, the end of the month you paid for].\n\n[If a refund applies: Your refund of $[amount] is on its way.]\n\nThank you for giving it a try. If you ever want to start again, just email me." + SIGN_EN },
+      es: {
+        subject: "Confirmamos la cancelación de su Valley Bot",
+        body: "Hola [Nombre]:\n\nConfirmo que cancelé su servicio de Valley Bot, como usted lo pidió el [fecha]. No se le volverá a cobrar. Usted conserva el servicio hasta el [fecha, el final del mes que pagó].\n\n[Si aplica un reembolso: Su reembolso de $[monto] va en camino.]\n\nGracias por probarlo. Si algún día quiere empezar otra vez, solo escríbame." + SIGN_ES } },
+    { title: "One follow up after a week", en: {
+        subject: "Quick follow up on Valley Bot",
+        body: "Hi [Name],\n\nI wanted to follow up once on the demo I sent last week. If it would help, I can show it to you in 2 minutes, in person or on your phone.\n\nIf now is not a good time, no problem at all." + SIGN_EN },
+      es: {
+        subject: "Seguimiento sobre Valley Bot",
+        body: "Hola [Nombre]:\n\nQuería darle seguimiento una vez sobre la demostración que le mandé la semana pasada. Si le ayuda, se la enseño en 2 minutos, en persona o en su teléfono.\n\nSi ahorita no es buen momento, no hay problema." + SIGN_ES } }
+  ];
+
+  var INCOME_CATS = ["Starter plan", "Pro plan", "Setup fee", "Refund given (enter as a positive amount, it is subtracted)", "Other income"];
+  var EXPENSE_CATS = ["Texting (Twilio)", "Hosting and data (Supabase)", "AI usage (Anthropic)", "Web address", "Payment fees (Stripe)", "Software and tools", "Phone and internet", "Travel and mileage", "Marketing and ads", "Lawyer, accountant, fees", "Equipment", "Other expense"];
+  var KNOWN = [
+    ["Twilio starting balance (estimate)", "Texting (Twilio)", 20, "You choose the amount."],
+    ["Texting registration: brand", "Texting (Twilio)", 4.5, "One time. From Twilio's help pages."],
+    ["Texting registration: campaign review", "Texting (Twilio)", 15, "One time, not refunded if it is rejected."],
+    ["Texting campaign, monthly", "Texting (Twilio)", 2, "Per number, per month. Depends on the type."],
+    ["Hosting, Supabase Pro (estimate)", "Hosting and data (Supabase)", 25, "Monthly, once clients pay."],
+    ["Web address (estimate)", "Web address", 12, "Yearly."]
+  ];
+
+  // ================================================================= saved state
+  // Saved in this browser right away, and in the shared store when the page is allowed to use it.
+  var COLLS = ["calls", "tasks", "clients", "money", "videos"];
+  var state = { calls: {}, tasks: {}, clients: {}, money: {}, videos: {} };
+  var db = null, timers = {}, chains = {};
+  function lsGet(k) { try { return JSON.parse(localStorage.getItem("vbhq-" + k)); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem("vbhq-" + k, JSON.stringify(v)); } catch (e) {} }
+  COLLS.forEach(function (c) { state[c] = lsGet(c) || {}; });
+
+  function save(coll, id, value, delay) {
+    state[coll][id] = value;
+    lsSet(coll, state[coll]);
+    if (!db) return;
+    var key = coll + "/" + id;
+    clearTimeout(timers[key]);
+    timers[key] = setTimeout(function () {
+      chains[key] = (chains[key] || Promise.resolve()).then(function () { return db.collection(coll).doc(id).set(state[coll][id]); }).catch(function () {});
+    }, delay || 0);
+  }
+  function patch(coll, id, p, delay) { save(coll, id, Object.assign({}, state[coll][id] || {}, p), delay); }
+  function remove(coll, id) {
+    delete state[coll][id]; lsSet(coll, state[coll]);
+    if (db) chains[coll + "/" + id] = (chains[coll + "/" + id] || Promise.resolve()).then(function () { return db.collection(coll).doc(id).delete(); }).catch(function () {});
+  }
+  function taskDone(id) {
+    var t = state.tasks[id];
+    if (t && typeof t.done === "boolean") return t.done;
+    for (var i = 0; i < TASKS.length; i++) if (TASKS[i].id === id) return !!TASKS[i].done;
+    return false;
+  }
+  function typing() { var a = document.activeElement; return a && (a.tagName === "TEXTAREA" || a.tagName === "INPUT" || a.tagName === "SELECT"); }
+  function newId(p) { return p + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36); }
+
+  // ================================================================= helpers
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function ymd(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function today() { return ymd(new Date()); }
+  function parseYmd(s) { var p = (s || "").split("-"); return p.length === 3 ? new Date(+p[0], +p[1] - 1, +p[2]) : null; }
+  function addDays(s, n) { var d = parseYmd(s); if (!d) return ""; d.setDate(d.getDate() + n); return ymd(d); }
+  function daysBetween(a, b) { return Math.round((parseYmd(b) - parseYmd(a)) / 86400000); }
+  function money(n) { var neg = n < 0; return (neg ? "-" : "") + "$" + Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function prettyDate(s) { var d = parseYmd(s); return d ? d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""; }
+
+  function copy(text, btn) {
+    var done = function () { var old = btn.textContent; btn.textContent = "Copied"; setTimeout(function () { btn.textContent = old; }, 1400); };
+    var fallback = function () {
+      var ta = el("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta);
+      ta.select(); try { document.execCommand("copy"); done(); } catch (e) { btn.textContent = "Select and copy"; } document.body.removeChild(ta);
+    };
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+  }
+  function copyBlock(label, text, mono) {
+    var b = el("button", { class: "btn small", text: "Copy" });
+    b.onclick = function () { copy(text, b); };
+    return el("div", { class: "copyblock" }, label ? el("div", { class: "label", text: label }) : null, el("div", { class: "txt" + (mono ? " mono" : ""), text: text }), b);
+  }
+  function card(title, note) { return el("section", { class: "card" }, title ? el("h2", { text: title }) : null, note ? el("p", { class: "muted", text: note }) : null); }
+  function link(url, label) { return el("a", { class: "btn small", href: url, target: "_blank", rel: "noopener", text: label || "Open" }); }
+  function field(label, input, id) { if (id) input.id = id; return el("div", { class: "field" }, el("label", { for: input.id || "", text: label }), input); }
+  function select(options, value, id) {
+    var s = el("select", { id: id });
+    options.forEach(function (o) { s.appendChild(new Option(Array.isArray(o) ? o[1] : o, Array.isArray(o) ? o[0] : o)); });
+    s.value = value; return s;
+  }
+  function input(type, value, id, ph) { var i = el("input", { type: type, id: id }); i.value = value == null ? "" : value; if (ph) i.placeholder = ph; if (type === "number") { i.step = "0.01"; i.inputMode = "decimal"; } return i; }
+  function langSwitch(options, current, onPick) {
+    var d = el("div", { class: "lang" });
+    options.forEach(function (o) {
+      var b = el("button", { text: Array.isArray(o) ? o[1] : o }); b.setAttribute("aria-pressed", String(current === (Array.isArray(o) ? o[0] : o)));
+      b.onclick = function () { onPick(Array.isArray(o) ? o[0] : o); }; d.appendChild(b);
+    });
+    return d;
+  }
+
+  // ================================================================= numbers used by several sections
+  function callCounts() {
+    var c = { called: 0, talked: 0, demo: 0, trial: 0, paying: 0 };
+    CALLS.forEach(function (_, i) {
+      var s = (state.calls["c" + i] || {}).status || "new";
+      if (s !== "new") c.called++;
+      if (["talked", "demo", "trial", "paying"].indexOf(s) > -1) c.talked++;
+      if (["demo", "trial", "paying"].indexOf(s) > -1) c.demo++;
+      if (["trial", "paying"].indexOf(s) > -1) c.trial++;
+      if (s === "paying") c.paying++;
+    });
+    return c;
+  }
+  function clientList() { return Object.keys(state.clients).map(function (id) { return Object.assign({ id: id }, state.clients[id]); }).sort(function (a, b) { return (a.name || "").localeCompare(b.name || ""); }); }
+  function trialInfo(c) {
+    if (c.status !== "trial" || !c.trialStart) return null;
+    var end = addDays(c.trialStart, 14), left = daysBetween(today(), end);
+    return { end: end, left: left, remindOn: addDays(end, -3) };
+  }
+  function moneyList() { return Object.keys(state.money).map(function (id) { return Object.assign({ id: id }, state.money[id]); }).sort(function (a, b) { return (b.date || "").localeCompare(a.date || "") || b.id.localeCompare(a.id); }); }
+  function signed(e) {
+    var amt = Number(e.amount) || 0;
+    if (e.type === "in") return e.category && e.category.indexOf("Refund given") === 0 ? -amt : amt;
+    return -amt;
+  }
+
+  // ================================================================= sections
+  function sToday(m) {
+    var nextTask = null;
+    for (var i = 0; i < TASKS.length; i++) if (!taskDone(TASKS[i].id) && TASKS[i].group !== "Later") { nextTask = TASKS[i]; break; }
+    var nx = el("div", { class: "next" }, el("small", { text: "Your next step" }), el("b", { text: nextTask ? nextTask.text : "Everything on the list is done. Keep calling shops." }), nextTask && nextTask.cost ? el("p", { text: nextTask.cost }) : null);
+    m.appendChild(nx);
+
+    var reminders = [];
+    clientList().forEach(function (c) {
+      var t = trialInfo(c);
+      if (t) {
+        if (t.left < 0) reminders.push([true, (c.name || "A client") + ": the trial ended " + (-t.left) + " day" + (t.left === -1 ? "" : "s") + " ago. Send the invoice or ask what they decided."]);
+        else if (t.left <= 3) reminders.push([t.left === 0, (c.name || "A client") + ": the trial ends " + (t.left === 0 ? "today" : "in " + t.left + " day" + (t.left === 1 ? "" : "s")) + ". Message them (the Emails tab has the wording)."]);
+      }
+      if (c.status === "paying" && c.nextCharge) {
+        var d = daysBetween(today(), c.nextCharge);
+        if (d <= 3 && d >= 0) reminders.push([false, (c.name || "A client") + ": next invoice " + (d === 0 ? "is today" : "in " + d + " day" + (d === 1 ? "" : "s")) + " (" + prettyDate(c.nextCharge) + ")."]);
+      }
+    });
+    if (reminders.length) {
+      var rc = card("Reminders");
+      reminders.forEach(function (r) { rc.appendChild(el("div", { class: "remind" + (r[0] ? " bad" : ""), text: r[1] })); });
+      m.appendChild(rc);
+    }
+
+    var c = callCounts();
+    var cl = clientList();
+    var mon = moneyList(), month = today().slice(0, 7), inc = 0, exp = 0;
+    mon.forEach(function (e) { if ((e.date || "").slice(0, 7) !== month) return; var v = signed(e); if (v > 0) inc += v; else exp += -v; });
+    var s = card("Where you stand");
+    var g = el("div", { class: "grid" });
+    [["Shops called", c.called + " of " + CALLS.length], ["Talked to an owner", String(c.talked)], ["Demos", String(c.demo)],
+     ["Clients on trial", String(cl.filter(function (x) { return x.status === "trial"; }).length)], ["Paying clients", String(cl.filter(function (x) { return x.status === "paying"; }).length)],
+     ["Money in this month", money(inc)], ["Money out this month", money(exp)], ["Profit this month", money(inc - exp)]].forEach(function (x) {
+      g.appendChild(el("div", { class: "stat" }, el("b", { text: x[1] }), el("span", { text: x[0] })));
+    });
+    s.appendChild(g); m.appendChild(s);
+
+    var q = card("Quick actions");
+    var r = el("div", { class: "row" });
+    [["Go to the calls", "calls", true], ["Add a client", "clients"], ["Open the demo", "demo"], ["Log money", "money"], ["Write an email", "emails"]].forEach(function (a) {
+      var b = el("button", { class: "btn" + (a[2] ? " primary" : ""), text: a[0] }); b.onclick = function () { show(a[1]); window.scrollTo(0, 0); }; r.appendChild(b);
+    });
+    q.appendChild(r); m.appendChild(q);
+
+    m.appendChild(card("The offer in one breath", null)).appendChild(el("p", { text: "Valley Bot answers a shop's customer texts and website chats in English or Spanish, day or night, collects the name, phone, address and problem, and hands over a lead ready to schedule. Emergencies get an alert right away. Starter is $175 a month, free for 14 days, no card to start. It does not answer phone calls." }));
+  }
+
+  var callFilter = "all";
+  function sCalls(m) {
+    var c = callCounts();
+    var s = card("Call list", c.called + " of " + CALLS.length + " called. Numbers marked orange or red need a double check before you call.");
+    var chips = el("div", { class: "chips" });
+    [["all", "All"], ["new", "To call"], ["talked", "Talked"], ["demo", "Demo or trial"], ["no", "No answer or no"]].forEach(function (f) {
+      var b = el("button", { text: f[1] }); b.setAttribute("aria-pressed", String(callFilter === f[0]));
+      b.onclick = function () { callFilter = f[0]; show("calls"); }; chips.appendChild(b);
+    });
+    s.appendChild(chips); m.appendChild(s);
+    var shown = 0;
+    CALLS.forEach(function (row, i) {
+      var id = "c" + i, st = state.calls[id] || {}, status = st.status || "new";
+      if (callFilter === "new" && status !== "new") return;
+      if (callFilter === "talked" && status !== "talked") return;
+      if (callFilter === "demo" && ["demo", "trial", "paying"].indexOf(status) === -1) return;
+      if (callFilter === "no" && ["noanswer", "voicemail", "no"].indexOf(status) === -1) return;
+      shown++;
+      var d = el("div", { class: "item" });
+      d.appendChild(el("div", { class: "row" }, el("span", { class: "name", text: (i + 1) + ". " + row[0] }), el("span", { class: "tag", text: row[2] }), el("span", { class: "tag", text: row[1] })));
+      if (row[3]) {
+        var cb = el("button", { class: "btn small", text: "Copy number" }); cb.onclick = function () { copy(row[3].split(" or ")[0], cb); };
+        d.appendChild(el("div", { class: "row" }, el("span", { class: "phone", text: row[3] }), cb));
+      } else d.appendChild(el("span", { class: "tag bad", text: "No number yet" }));
+      d.appendChild(el("span", { class: "tag " + (row[4] === "ok" ? "good" : row[4] === "warn" ? "warn" : "bad"), text: row[5] }));
+      if (row[6]) d.appendChild(el("span", { class: "muted", text: "Hours: " + row[6] }));
+      d.appendChild(el("span", { class: "muted", text: "Website or email: " + row[7] }));
+      var sel = select(STATUS, status, "st-" + id); sel.setAttribute("aria-label", "Status for " + row[0]);
+      var dateLine = el("span", { class: "muted", text: st.date ? "Last updated " + st.date : "" });
+      sel.onchange = function () {
+        var cur = state.calls[id] || {}, dt = cur.date || "";
+        if (sel.value !== "new") dt = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        patch("calls", id, { status: sel.value, notes: cur.notes || "", date: dt }, 0); dateLine.textContent = dt ? "Last updated " + dt : "";
+      };
+      var ta = el("textarea", { id: "nt-" + id, placeholder: "Answers to the 3 questions, who you spoke to, next step" }); ta.value = st.notes || "";
+      ta.oninput = function () { patch("calls", id, { notes: ta.value, status: (state.calls[id] || {}).status || sel.value }, 700); };
+      add(d, sel, dateLine, ta); m.appendChild(d);
+    });
+    if (!shown) m.appendChild(el("p", { class: "empty", text: "Nothing here with that filter." }));
+  }
+  function add(p) { for (var i = 1; i < arguments.length; i++) p.appendChild(arguments[i]); return p; }
+
+  function sClients(m) {
+    var s = card("Clients", "Every shop that is trying or paying. The trial lasts 14 days from the day you enter. The app reminds you 3 days before it ends, on the Today tab.");
+    var b = el("button", { class: "btn primary", text: "Add a client" });
+    b.onclick = function () { save("clients", newId("k"), { name: "", status: "trial", plan: "Starter", price: 175, trialStart: today() }, 0); show("clients"); };
+    s.appendChild(b); m.appendChild(s);
+    var list = clientList();
+    if (!list.length) m.appendChild(el("p", { class: "empty", text: "No clients yet. Tap Add a client when a shop agrees to a trial." }));
+    list.forEach(function (c) {
+      var id = c.id, d = el("div", { class: "item" });
+      var t = trialInfo(c);
+      var head = el("div", { class: "row" }, el("span", { class: "name", text: c.name || "New client" }));
+      if (t) head.appendChild(el("span", { class: "tag " + (t.left < 0 ? "bad" : t.left <= 3 ? "warn" : "good"), text: t.left < 0 ? "Trial ended " + (-t.left) + " days ago" : t.left === 0 ? "Trial ends today" : "Trial ends in " + t.left + " days (" + prettyDate(t.end) + ")" }));
+      if (c.status === "paying") head.appendChild(el("span", { class: "tag good", text: "Paying " + money(Number(c.price) || 0) + " a month" }));
+      d.appendChild(head);
+      if (t) d.appendChild(el("span", { class: "muted", text: "Message them on " + prettyDate(t.remindOn) + " (3 days before the trial ends)." }));
+      var f = el("div", { class: "fields" });
+      var fields = [["Shop name", "text", "name"], ["Owner's name", "text", "owner"], ["Phone", "text", "phone"], ["Email", "email", "email"]];
+      fields.forEach(function (x) {
+        var i = input(x[1], c[x[2]], "cl-" + id + "-" + x[2]);
+        i.oninput = function () { var p = {}; p[x[2]] = i.value; patch("clients", id, p, 700); };
+        f.appendChild(field(x[0], i));
+      });
+      var plan = select(["Starter", "Pro"], c.plan || "Starter", "cl-" + id + "-plan");
+      plan.onchange = function () { patch("clients", id, { plan: plan.value, price: plan.value === "Starter" ? 175 : (Number(c.price) > 175 ? c.price : 500) }, 0); show("clients"); };
+      f.appendChild(field("Plan", plan));
+      var price = input("number", c.price, "cl-" + id + "-price");
+      price.oninput = function () { patch("clients", id, { price: Number(price.value) || 0 }, 700); };
+      f.appendChild(field("Price a month", price));
+      var status = select([["trial", "On free trial"], ["paying", "Paying"], ["cancelled", "Cancelled"]], c.status || "trial", "cl-" + id + "-status");
+      status.onchange = function () { patch("clients", id, { status: status.value }, 0); show("clients"); };
+      f.appendChild(field("Status", status));
+      var ts = input("date", c.trialStart, "cl-" + id + "-trialStart");
+      ts.onchange = function () { patch("clients", id, { trialStart: ts.value }, 0); show("clients"); };
+      f.appendChild(field("Trial started (the day texting worked)", ts));
+      var nc = input("date", c.nextCharge, "cl-" + id + "-nextCharge");
+      nc.onchange = function () { patch("clients", id, { nextCharge: nc.value }, 0); };
+      f.appendChild(field("Next invoice date", nc));
+      d.appendChild(f);
+      var notes = el("textarea", { id: "cl-" + id + "-notes", placeholder: "Notes: what they said, what they need, texting number, anything you promised" }); notes.value = c.notes || "";
+      notes.oninput = function () { patch("clients", id, { notes: notes.value }, 700); };
+      d.appendChild(notes);
+      var armed = false, del = el("button", { class: "btn small danger", text: "Delete this client" });
+      del.onclick = function () { if (!armed) { armed = true; del.textContent = "Tap again to delete for good"; return; } remove("clients", id); show("clients"); };
+      d.appendChild(del);
+      m.appendChild(d);
+    });
+  }
+
+  function sDemo(m) {
+    var s = card("Demo links", "Open one on your phone and hand the phone to the shop owner. These are whole links, ready to copy.");
+    [["The original demo, Valley Smart Services", SITE + "demo.html"],
+     ["The original demo showing the after-hours greeting", SITE + "demo.html?vss-force=closed"],
+     ["Test Shop demo", SITE + "demo.html?shop=demo-test-shop&name=Test%20Shop"],
+     ["Test Shop showing the after-hours greeting", SITE + "demo.html?shop=demo-test-shop&name=Test%20Shop&vss-force=closed"],
+     ["Dashboard (log in with a key)", SITE + "dashboard.html"]].forEach(function (x) { var b = copyBlock(x[0], x[1], true); b.appendChild(link(x[1], "Open")); s.appendChild(b); });
+    m.appendChild(s);
+    var n = card("Make a demo with a shop's own name", "On your computer, in your bot project folder, run: python scripts/make_demo.py. It asks for the shop name and prints the demo link, the after-hours link, and a dashboard key (shown once, so save it). Alert emails for demos go to your own email. The signed-in version of this app on claude.ai has the exact command to copy.");
+    
+    
+    m.appendChild(n);
+    var st = card("The 2 minute demo");
+    [["1. Hand them your phone", "Say: You be the customer. Type anything, in Spanish if you like. If they freeze, have them type: oye my AC no esta enfriando, can you send someone?"],
+     ["2. Show the lead", "Open the dashboard. Say: This is what you get. Name, phone, address and the problem, ready to schedule."],
+     ["3. Show the emergency", "Have them type: huele a gas en mi cocina. The bot gives a safety tip and alerts the shop. Show the red EMERGENCY on the dashboard."],
+     ["4. Show after hours", "Open the after-hours link. Say: At night your website says you are closed but still takes the customer's message."],
+     ["5. Show the Results tab", "Say: In 14 days this page shows how many customers wrote after hours and how many jobs you would have missed."]].forEach(function (x) {
+      st.appendChild(el("details", null, el("summary", { text: x[0] }), el("div", null, el("p", { text: x[1] }))));
+    });
+    st.appendChild(el("p", { class: "muted", text: "Be honest: it answers texts and website chat, not phone calls. Texting on their own number is set up after they say yes and takes about a week for the carriers to approve." }));
+    m.appendChild(st);
+  }
+
+  var scriptLang = "en";
+  function sScripts(m) {
+    var s = card("Phone script", "Pick a language, then copy any part or read it from here. Use usted with a stranger in Spanish.");
+    s.appendChild(langSwitch([["en", "English"], ["es", "Español"]], scriptLang, function (v) { scriptLang = v; show("scripts"); }));
+    m.appendChild(s);
+    var data = SCRIPT[scriptLang];
+    data.blocks.forEach(function (b) { m.appendChild(copyBlock(b[0], b[1])); });
+    var o = card(scriptLang === "en" ? "If they object" : "Si ponen objeciones");
+    data.objections.forEach(function (x) { o.appendChild(el("details", null, el("summary", { text: x[0] }), el("div", null, copyBlock(null, x[1])))); });
+    m.appendChild(o);
+  }
+
+  var emailLang = "en";
+  function sEmails(m) {
+    var s = card("Email templates", "Replace anything in [brackets] before you send. Pick a language, open a template, and copy the subject and the message.");
+    s.appendChild(langSwitch([["en", "English"], ["es", "Español"]], emailLang, function (v) { emailLang = v; show("emails"); }));
+    m.appendChild(s);
+    var c = card();
+    EMAILS.forEach(function (e) {
+      var t = e[emailLang];
+      c.appendChild(el("details", null, el("summary", { text: e.title }), el("div", null, copyBlock("Subject", t.subject), copyBlock("Message", t.body))));
+    });
+    m.appendChild(c);
+  }
+
+  function sVideos(m) {
+    var s = card("Videos", "Your video files are in the marketing folder of your bot project, on your computer. Send yourself the one you need. Pick the right one for where it will be seen.");
+    
+    m.appendChild(s);
+    VIDEOS.forEach(function (v, i) {
+      var id = "v" + i, st = state.videos[id] || {};
+      var d = el("div", { class: "item" });
+      d.appendChild(el("span", { class: "name", text: v[0] }));
+      d.appendChild(el("span", { text: v[1] }));
+      d.appendChild(el("span", { class: "muted", text: "Use it for: " + v[2] }));
+      var cb = el("button", { class: "btn small", text: "Copy file name" }); cb.onclick = function () { copy(v[0], cb); };
+      d.appendChild(cb);
+      var note = el("textarea", { id: "vn-" + id, placeholder: "Where and when you sent or posted this one (so you do not send it twice)" }); note.value = st.note || "";
+      note.oninput = function () { patch("videos", id, { note: note.value }, 700); };
+      d.appendChild(note);
+      m.appendChild(d);
+    });
+    var tour = card("What the 63 second tour shows, in order");
+    TOUR.forEach(function (x, i) { tour.appendChild(el("p", { text: (i + 1) + ". " + x })); });
+    m.appendChild(tour);
+    var how = card("How to use a video");
+    how.appendChild(el("details", null, el("summary", { text: "Send it in an email" }), el("div", null, el("p", { text: "1. Open a new email and tap the paperclip or Attach." }), el("p", { text: "2. Pick valley-bot-tour-email.mp4 from the marketing folder. It is about 2 MB, small enough for any email." }), el("p", { text: "3. Use the After a call template on the Emails tab for the words." }), el("p", { class: "muted", text: "Many email apps play videos without sound, so the words on the screen carry it." }))));
+    how.appendChild(el("details", null, el("summary", { text: "Show it live to a shop owner" }), el("div", null, el("p", { text: "1. On a laptop or TV, play valley-bot-tour-widescreen.mp4 full screen. On your iPhone, play the vertical one." }), el("p", { text: "2. Turn the sound on. The music is low and there is no talking." }), el("p", { text: "3. When it ends, open the demo link and hand them your phone." }))));
+    how.appendChild(el("details", null, el("summary", { text: "Post it on Facebook" }), el("div", null, el("p", { text: "1. Use the vertical video. Start a Reel for the most reach, or a normal post." }), el("p", { text: "2. Paste the text from the Posts tab." }), el("p", { text: "3. Post once texting is live, so the video matches what people get." }))));
+    how.appendChild(el("details", null, el("summary", { text: "Add your own music or voice (CapCut)" }), el("div", null, el("p", { text: "1. Open CapCut and import valley-bot-tour-vertical-silent.mp4." }), el("p", { text: "2. Add a sound or your voice. Pick sounds marked for commercial use, since this is a business ad." }))));
+    m.appendChild(how);
+  }
+
+  var fbLang = "English";
+  function sPosts(m) {
+    var s = card("Facebook post", "Pick one version and copy it. Post it with a video, as a Reel for the most reach. Best to post once texting is live.");
+    s.appendChild(langSwitch(Object.keys(FB), fbLang, function (v) { fbLang = v; show("posts"); }));
+    m.appendChild(s);
+    m.appendChild(copyBlock(fbLang + " post", FB[fbLang]));
+    var tips = card("Posting tips");
+    ["Do not post a price in the post. Say \"free for 14 days\" and ask people to message you.", "Reply to every comment the same day, in the language they used.", "Post when shop owners are likely on their phones: early morning or after work.", "Do not say \"cancel anytime\" in a post unless the terms say so. They do now: month to month."].forEach(function (x) { tips.appendChild(el("p", { text: "• " + x })); });
+    m.appendChild(tips);
+  }
+
+  function sTerms(m) {
+    var p = card("Plans and price");
+    var g = el("div", { class: "grid" });
+    [["Starter", "$175", "a month", "Texting assistant, website chat box, private leads page, instant alerts for new leads and emergencies."],
+     ["Pro", "From $500", "a month", "Everything in Starter, plus each new lead goes straight into the client's Housecall Pro or Jobber. Housecall Pro connections need its Max plan."]].forEach(function (x) {
+      g.appendChild(el("div", { class: "stat" }, el("span", { text: x[0] }), el("div", { class: "price" }, x[1], el("small", { text: " " + x[2] })), el("p", { class: "muted", text: x[3] })));
+    });
+    p.appendChild(g);
+    p.appendChild(el("p", { class: "muted", text: "Every plan: free 14 day trial, no card to start, cancel any time. No other discounts." }));
+    m.appendChild(p);
+    m.appendChild(copyBlock("Terms in English", TERMS.en));
+    m.appendChild(copyBlock("Términos en español", TERMS.es));
+    var r = card("Rules for you");
+    ["Send the terms in writing and get a written \"yes\" before any trial starts. Keep it.", "The trial clock starts the day texting works for that shop.", "You promised to text or email 3 days before the trial ends. The Clients tab reminds you.", "Keep every cancellation email and your reply.", "Real invoicing (Stripe) must be on before the first invoice. It is in test mode today.", "Have a Texas lawyer and an accountant read this before the first paid client. This is not legal advice."].forEach(function (x) { r.appendChild(el("p", { text: "• " + x })); });
+    m.appendChild(r);
+  }
+
+  // ----------------------------------------------------------------- bookkeeping
+  var moneyView = "month";
+  function sMoney(m) {
+    var all = moneyList();
+    var intro = card("Money", "Log every dollar that comes in and goes out. This is simple bookkeeping for you and your accountant. It is not tax advice: keep your receipts and ask your accountant which costs count.");
+    m.appendChild(intro);
+
+    // add form
+    var f = card("Add an entry");
+    var type = select([["in", "Money in"], ["out", "Money out"]], "out", "mn-type");
+    var date = input("date", today(), "mn-date");
+    var amount = input("number", "", "mn-amount", "0.00");
+    var cat = select(EXPENSE_CATS, EXPENSE_CATS[0], "mn-cat");
+    var who = input("text", "", "mn-who", "Client or company");
+    var note = input("text", "", "mn-note", "What it was for");
+    type.onchange = function () {
+      var list = type.value === "in" ? INCOME_CATS : EXPENSE_CATS; cat.textContent = "";
+      list.forEach(function (o) { cat.appendChild(new Option(o, o)); });
+    };
+    var fl = el("div", { class: "fields" });
+    add(fl, field("Type", type), field("Date", date), field("Amount", amount), field("Category", cat), field("Client or company", who), field("Note", note));
+    f.appendChild(fl);
+    var msg = el("span", { class: "muted", text: "" });
+    var addBtn = el("button", { class: "btn primary", text: "Add entry" });
+    addBtn.onclick = function () {
+      var amt = parseFloat(amount.value);
+      if (!(amt > 0)) { msg.textContent = "Enter an amount above zero."; return; }
+      if (!date.value) { msg.textContent = "Pick a date."; return; }
+      save("money", newId("m"), { type: type.value, date: date.value, amount: Math.round(amt * 100) / 100, category: cat.value, who: who.value.trim(), note: note.value.trim() }, 0);
+      show("money");
+    };
+    add(f, addBtn, msg); m.appendChild(f);
+
+    // known costs
+    var k = card("Known costs from your plan", "Estimates from our notes. Tap Use to fill the form above, then change the amount to what you really paid.");
+    KNOWN.forEach(function (x) {
+      var useBtn = el("button", { class: "btn small", text: "Use" });
+      useBtn.onclick = function () {
+        type.value = "out"; type.onchange(); cat.value = x[1]; amount.value = x[2]; note.value = x[0]; window.scrollTo(0, 0);
+        msg.textContent = "Filled in. Check the amount, then tap Add entry."; amount.focus();
+      };
+      k.appendChild(el("div", { class: "row" }, el("span", { text: x[0] + " ($" + x[2] + ") " }), el("span", { class: "muted", text: x[3] }), useBtn));
+    });
+    m.appendChild(k);
+
+    // summaries
+    var months = {}, cats = {}, ytd = { inn: 0, out: 0 }, yr = today().slice(0, 4);
+    all.forEach(function (e) {
+      var mo = (e.date || "").slice(0, 7); if (!mo) return;
+      months[mo] = months[mo] || { inn: 0, out: 0 };
+      var v = signed(e); if (v > 0) months[mo].inn += v; else months[mo].out += -v;
+      if (mo.slice(0, 4) === yr) { if (v > 0) ytd.inn += v; else ytd.out += -v; var key = (v > 0 ? "In: " : "Out: ") + (e.category || "Other"); cats[key] = (cats[key] || 0) + Math.abs(v); }
+    });
+    var sm = card("Totals");
+    var g = el("div", { class: "grid" });
+    [["Money in this year", money(ytd.inn)], ["Money out this year", money(ytd.out)], ["Profit this year", money(ytd.inn - ytd.out)]].forEach(function (x) { g.appendChild(el("div", { class: "stat" }, el("b", { text: x[1] }), el("span", { text: x[0] }))); });
+    sm.appendChild(g);
+    var keys = Object.keys(months).sort().reverse().slice(0, 12);
+    if (keys.length) {
+      var t = el("table"), hd = el("tr");
+      ["Month", "In", "Out", "Profit"].forEach(function (x, i) { hd.appendChild(el("th", { class: i ? "num" : "", text: x })); });
+      t.appendChild(hd);
+      keys.forEach(function (mo) { var v = months[mo], r = el("tr"); add(r, el("td", { text: mo }), el("td", { class: "num in", text: money(v.inn) }), el("td", { class: "num out", text: money(v.out) }), el("td", { class: "num", text: money(v.inn - v.out) })); t.appendChild(r); });
+      sm.appendChild(el("div", { class: "scroll" }, t));
+    }
+    var ck = Object.keys(cats).sort();
+    if (ck.length) {
+      sm.appendChild(el("h3", { text: "By category, " + yr }));
+      var t2 = el("table"); ck.forEach(function (key) { t2.appendChild(el("tr", null, el("td", { text: key }), el("td", { class: "num", text: money(cats[key]) }))); });
+      sm.appendChild(el("div", { class: "scroll" }, t2));
+    }
+    m.appendChild(sm);
+
+    // entries
+    var ent = card("Entries", all.length + " entries");
+    if (!all.length) ent.appendChild(el("p", { class: "empty", text: "Nothing logged yet. Add the first entry above." }));
+    if (all.length) {
+      var rows = all.slice(0, 200), t3 = el("table"), h3 = el("tr");
+      ["Date", "What", "Amount", ""].forEach(function (x, i) { h3.appendChild(el("th", { class: i === 2 ? "num" : "", text: x })); });
+      t3.appendChild(h3);
+      rows.forEach(function (e) {
+        var armed = false, del = el("button", { class: "btn small danger", text: "Delete" });
+        del.onclick = function () { if (!armed) { armed = true; del.textContent = "Sure?"; return; } remove("money", e.id); show("money"); };
+        var v = signed(e);
+        t3.appendChild(el("tr", null,
+          el("td", { text: prettyDate(e.date) }),
+          el("td", null, el("div", { text: e.category || "" }), el("div", { class: "muted", text: [e.who, e.note].filter(Boolean).join(" · ") })),
+          el("td", { class: "num " + (v > 0 ? "in" : "out"), text: money(v) }), el("td", null, del)));
+      });
+      ent.appendChild(el("div", { class: "scroll" }, t3));
+      var csv = "Date,Type,Category,Client or company,Note,Amount\n" + all.map(function (e) {
+        var q = function (x) { return "\"" + String(x == null ? "" : x).replace(/"/g, "\"\"") + "\""; };
+        return [e.date, e.type === "in" ? "In" : "Out", q(e.category), q(e.who), q(e.note), signed(e).toFixed(2)].join(",");
+      }).join("\n");
+      var cb = el("button", { class: "btn", text: "Copy all entries for my accountant (spreadsheet text)" }); cb.onclick = function () { copy(csv, cb); };
+      ent.appendChild(cb);
+      ent.appendChild(el("p", { class: "muted", text: "Paste it into a new Excel or Google Sheets file. Each column lands in its own cell." }));
+    }
+    m.appendChild(ent);
+  }
+
+  function sLaunch(m) {
+    var groups = [];
+    TASKS.forEach(function (t) { if (groups.indexOf(t.group) === -1) groups.push(t.group); });
+    var open = TASKS.filter(function (t) { return !taskDone(t.id); }).length;
+    m.appendChild(card("Launch checklist", open + " still open. Tick items as you finish them. This saves automatically."));
+    groups.forEach(function (g) {
+      var s = card(g);
+      TASKS.filter(function (t) { return t.group === g; }).forEach(function (t) {
+        var cb = el("input", { type: "checkbox", id: "tk-" + t.id }); cb.checked = taskDone(t.id);
+        var tx = el("span", { class: cb.checked ? "done" : "", text: t.text });
+        var lab = el("label", { for: "tk-" + t.id }, tx, t.cost ? el("span", { class: "cost", text: t.cost }) : null);
+        cb.onchange = function () { tx.className = cb.checked ? "done" : ""; save("tasks", t.id, { done: cb.checked }, 0); paintStatus(); };
+        s.appendChild(el("div", { class: "task" }, cb, lab));
+      });
+      m.appendChild(s);
+    });
+  }
+
+  function sLinks(m) {
+    var s = card("Your pages", "Whole links, ready to copy or open.");
+    [["Sales page", SITE], ["Privacy policy", SITE + "privacy.html"], ["Texting terms", SITE + "terms.html"], ["Dashboard", SITE + "dashboard.html"]].forEach(function (x) { var b = copyBlock(x[0], x[1], true); b.appendChild(link(x[1], "Open")); s.appendChild(b); });
+    m.appendChild(s);
+    var c = card("Contact and commands");
+    c.appendChild(copyBlock("Your email for clients", EMAIL, true));
+    
+    
+    
+    
+    m.appendChild(c);
+    var k = card("Working with Claude");
+    k.appendChild(el("p", { text: "Open Claude in your bot project folder so it reads its notes, then say what you need. For a big decision, say: ask the council. The council has six advisers: a skeptic, a shop owner, the numbers, risk, growth and the builder." }));
+    k.appendChild(el("p", { class: "muted", text: "No passwords or keys are stored on this page, on purpose." }));
+    m.appendChild(k);
+  }
+
+  // ================================================================= shell
+  var TABS = [["today", "Today", sToday], ["calls", "Calls", sCalls], ["clients", "Clients", sClients], ["demo", "Demo", sDemo], ["scripts", "Scripts", sScripts],
+              ["emails", "Emails", sEmails], ["videos", "Videos", sVideos], ["posts", "Posts", sPosts], ["terms", "Terms", sTerms], ["money", "Money", sMoney],
+              ["launch", "Launch", sLaunch], ["links", "Links", sLinks]];
+  var current = "today";
+
+  function paintStatus() {
+    var live = taskDone("twilio"), s = $("status");
+    s.textContent = live ? "Texting live" : "Not live yet"; s.className = "pill" + (live ? " live" : "");
+  }
+  function show(id) {
+    current = id;
+    try { localStorage.setItem("vbhq-tab", id); } catch (e) {}
+    var tabs = $("tabs"); tabs.textContent = "";
+    TABS.forEach(function (t) {
+      var b = el("button", { text: t[1], role: "tab" }); b.setAttribute("aria-selected", String(t[0] === id));
+      b.onclick = function () { show(t[0]); window.scrollTo(0, 0); }; tabs.appendChild(b);
+    });
+    var main = $("main"); main.textContent = "";
+    for (var i = 0; i < TABS.length; i++) if (TABS[i][0] === id) TABS[i][2](main);
+    paintStatus();
+  }
+
+  var start = "today";
+  try { start = (location.hash || "").replace("#", "") || localStorage.getItem("vbhq-tab") || "today"; } catch (e) {}
+  if (!TABS.some(function (t) { return t[0] === start; })) start = "today";
+  show(start);
+
+  // ================================================================= shared saving (when this page is allowed to use it)
+  function connect() {
+    if (!window.claude || !window.claude.use) return;
+    window.claude.use("db").then(function (d) {
+      if (!d) return;
+      db = d;
+      COLLS.forEach(function (coll) {
+        var first = true;
+        db.collection(coll).onSnapshot(function (snap) {
+          var local = state[coll];
+          if (first) {
+            first = false;
+            // The first time, anything saved only in this browser is sent up so nothing is lost.
+            if (snap.empty) { Object.keys(local).forEach(function (id) { db.collection(coll).doc(id).set(local[id]).catch(function () {}); }); return; }
+          }
+          var next = {}, changed = false;
+          snap.docs.forEach(function (doc) { next[doc.id] = doc.data(); });
+          Object.keys(local).forEach(function (id) { if (!next[id] && snap.metadata.hasPendingWrites) next[id] = local[id]; });
+          if (JSON.stringify(next) !== JSON.stringify(local)) { state[coll] = next; lsSet(coll, next); changed = true; }
+          if (changed && !typing()) show(current);
+        }, function () {});
+      });
+    }).catch(function () {});
+  }
+  connect();
+})();
+</script>
+</body>
+</html>
