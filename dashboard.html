@@ -59,6 +59,20 @@
     .login button, .logout { background: var(--brand); color: #fff; border: 0; border-radius: 8px; padding: 12px 18px; font: inherit; font-weight: 600; cursor: pointer; }
     .logout { background: none; color: var(--muted); padding: 4px; font-weight: 400; font-size: 14px; }
     .error { color: var(--red); font-size: 14px; min-height: 20px; }
+    .tabs { display: flex; gap: 8px; margin: 4px 0 12px; }
+    .tabs button { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 8px 18px; font: inherit; font-weight: 600; cursor: pointer; }
+    .tabs button.on { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .big { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 12px; font-size: 18px; line-height: 1.5; }
+    .big small { display: block; color: var(--muted); font-size: 14px; margin-top: 6px; }
+    .delta { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .delta.up { color: var(--green); }
+    .delta.down { color: var(--orange); }
+    .chart { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .chart h2 { margin: 0 0 12px; font-size: 16px; }
+    .bars { display: flex; align-items: flex-end; gap: 8px; height: 140px; }
+    .bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; font-size: 12px; color: var(--muted); }
+    .bar i { display: block; width: 100%; max-width: 48px; background: var(--brand); border-radius: 6px 6px 0 0; min-height: 2px; }
+    .bar b { color: var(--ink); font-size: 13px; margin-bottom: 4px; }
     @media (max-width: 520px) { .stats { grid-template-columns: repeat(2, 1fr); } .stat b { font-size: 22px; } .stat span { font-size: 12px; } }
   </style>
 </head>
@@ -70,6 +84,7 @@
     var KEY_STORE = "vss-dashboard-key";
     var app = document.getElementById("app");
     var key = null, leads = [], me = null, filter = "all", business = "all", lastUpdated = null, timer = null;
+    var view = "leads", results = null, resultsFor = null, loadingResults = false;
 
     try { key = localStorage.getItem(KEY_STORE); } catch (e) {}
     key ? refresh() : showLogin();
@@ -111,6 +126,7 @@
         me = data.me;
         lastUpdated = new Date();
         render();
+        if (view === "results") loadResults();
         clearInterval(timer);
         timer = setInterval(refresh, 30000);
       }).catch(function (err) {
@@ -169,6 +185,8 @@
       right.appendChild(out);
       header.appendChild(right);
       app.appendChild(header);
+      app.appendChild(viewTabs());
+      if (view === "results") { renderResults(); return; }
 
       var stats = el("div", "stats");
       [["needsCall", counts.needsCall, "Need a call now", counts.needsCall > 0],
@@ -183,24 +201,106 @@
       });
       app.appendChild(stats);
 
-      if (me.admin) {
-        var names = {};
-        leads.forEach(function (l) { names[l.business_id] = l.business_name; });
-        var pick = el("select", "pick");
-        pick.id = "business-filter";
-        pick.setAttribute("aria-label", "Business");
-        pick.appendChild(new Option("All businesses", "all"));
-        Object.keys(names).sort().forEach(function (id) { pick.appendChild(new Option(names[id], id)); });
-        pick.value = business;
-        pick.onchange = function () { business = pick.value; render(); };
-        app.appendChild(pick);
-      }
+      if (me.admin) app.appendChild(businessPicker(render));
 
       if (!shown.length) {
         app.appendChild(el("p", "empty", leads.length ? "Nothing here right now." : "No leads yet. They'll show up here as soon as someone texts or chats."));
         return;
       }
       shown.forEach(function (l) { app.appendChild(card(l)); });
+    }
+
+    function viewTabs() {
+      var tabs = el("div", "tabs");
+      [["leads", "Leads"], ["results", "Results"]].forEach(function (t) {
+        var b = el("button", view === t[0] ? "on" : "", t[1]);
+        b.onclick = function () { view = t[0]; render(); };
+        tabs.appendChild(b);
+      });
+      return tabs;
+    }
+
+    function businessPicker(onChange) {
+      var names = {};
+      leads.forEach(function (l) { names[l.business_id] = l.business_name; });
+      var pick = el("select", "pick");
+      pick.id = "business-filter";
+      pick.setAttribute("aria-label", "Business");
+      pick.appendChild(new Option("All businesses", "all"));
+      Object.keys(names).sort().forEach(function (id) { pick.appendChild(new Option(names[id], id)); });
+      pick.value = business;
+      pick.onchange = function () { business = pick.value; onChange(); };
+      return pick;
+    }
+
+    function loadResults() {
+      if (loadingResults) return;
+      loadingResults = true;
+      var want = me.admin ? business : "all";
+      call({ action: "stats", businessId: want }).then(function (d) {
+        results = d; resultsFor = want;
+      }).catch(function () {
+        results = { error: true }; resultsFor = want;
+      }).then(function () { loadingResults = false; render(); });
+    }
+
+    function renderResults() {
+      if (me.admin) app.appendChild(businessPicker(function () { results = null; render(); }));
+      var want = me.admin ? business : "all";
+      if (!results || resultsFor !== want) {
+        app.appendChild(el("p", "empty", "Loading results…"));
+        loadResults();
+        return;
+      }
+      if (results.error) {
+        app.appendChild(el("p", "empty", "Couldn't load the results. Check your internet and try again."));
+        return;
+      }
+      var t = results.thisWeek, p = results.lastWeek;
+
+      var big = el("div", "big");
+      big.appendChild(document.createTextNode(
+        "In the last 7 days, Valley Bot talked with " + t.leads + " new " + (t.leads === 1 ? "customer" : "customers") + ". " +
+        t.afterHours + " wrote after hours, when nobody was there to answer. " +
+        t.ready + " " + (t.ready === 1 ? "is" : "are") + " ready to schedule, and " +
+        t.emergencies + " " + (t.emergencies === 1 ? "was an emergency" : "were emergencies") + "."
+      ));
+      big.appendChild(el("small", null, "After hours means " + results.hours + "."));
+      app.appendChild(big);
+
+      var grid = el("div", "stats");
+      var askedT = Math.max(0, t.handedOff - t.emergencies), askedP = Math.max(0, p.handedOff - p.emergencies);
+      [["New customers", t.leads, p.leads], ["Ready to schedule", t.ready, p.ready],
+       ["After hours", t.afterHours, p.afterHours], ["Emergencies", t.emergencies, p.emergencies],
+       ["Replies sent", t.answered, p.answered], ["By text", t.texts, p.texts],
+       ["On the website", t.website, p.website], ["Asked for a person", askedT, askedP]
+      ].forEach(function (s) {
+        var c = el("div", "stat");
+        c.style.cursor = "default";
+        c.appendChild(el("b", null, String(s[1])));
+        c.appendChild(el("span", null, s[0]));
+        var diff = s[1] - s[2];
+        c.appendChild(el("span", "delta" + (diff > 0 ? " up" : diff < 0 ? " down" : ""),
+          diff === 0 ? "same as last week" : (diff > 0 ? "up " : "down ") + Math.abs(diff) + " from last week"));
+        grid.appendChild(c);
+      });
+      app.appendChild(grid);
+
+      var chart = el("div", "chart");
+      chart.appendChild(el("h2", null, "New customers each day"));
+      var bars = el("div", "bars");
+      var max = Math.max.apply(null, results.days.map(function (d) { return d.count; }).concat([1]));
+      results.days.forEach(function (d) {
+        var b = el("div", "bar");
+        b.appendChild(el("b", null, String(d.count)));
+        var i = el("i");
+        i.style.height = Math.round((d.count / max) * 100) + "%";
+        b.appendChild(i);
+        b.appendChild(el("span", null, d.label));
+        bars.appendChild(b);
+      });
+      chart.appendChild(bars);
+      app.appendChild(chart);
     }
 
     function card(l) {
