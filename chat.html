@@ -42,7 +42,7 @@
       s.setAttribute("data-business", shop);
       s.setAttribute("data-endpoint", "https://hlzmldcebgoeyxmrefcw.supabase.co/functions/v1/web-chat");
       s.setAttribute("data-open", "true");
-      if (name) s.setAttribute("data-title", name);
+      s.setAttribute("data-title", name || "Chat with us");
       document.body.appendChild(s);
       document.getElementById("open").onclick = function () {
         var b = document.querySelector(".vss-btn"); if (b && !document.querySelector(".vss-panel.open")) b.click();
