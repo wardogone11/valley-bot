@@ -10,6 +10,7 @@
  *   data-hours-open (default 8), data-hours-close (default 18), data-closed-days (default "Sun",
  *   for example "Sat,Sun"), data-timezone (default America/Chicago),
  *   data-after-hours-message (replaces the greeting), data-nudge-delay (milliseconds, default 8000).
+ *   data-open="true" opens the chat as soon as the page loads (used by chat.html).
  * To preview it, add ?vss-force=closed to the page address.
  */
 (function () {
@@ -140,6 +141,9 @@
       document.body.appendChild(nudge);
     }, NUDGE_DELAY);
   }
+
+  // A full-page chat link (web/chat.html) opens the chat straight away.
+  if (script.getAttribute("data-open") === "true") panel.classList.add("open");
 
   btn.onclick = function () {
     hideNudge();

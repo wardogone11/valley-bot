@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Chat with us | Chatea con nosotros</title>
+<style>
+  :root { --brand: #0b6e4f; --ink: #1d1d1f; --bg: #f5f7f6; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: var(--bg); }
+  header { background: var(--brand); color: #fff; padding: 28px 16px 24px; text-align: center; }
+  header h1 { margin: 0; font-size: 24px; }
+  header p { margin: 6px 0 0; opacity: .9; }
+  main { max-width: 520px; margin: 0 auto; padding: 20px 16px 120px; text-align: center; }
+  main p { margin: 0 0 12px; }
+  button.open { margin-top: 8px; border: 0; background: var(--brand); color: #fff; font: inherit; font-weight: 600; padding: 14px 28px; border-radius: 999px; cursor: pointer; }
+  small { color: #5f6368; display: block; margin-top: 24px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1 id="shop-name">Chat with us</h1>
+    <p>Day or night, in English or Spanish<br>De d&iacute;a o de noche, en ingl&eacute;s o en espa&ntilde;ol</p>
+  </header>
+  <main>
+    <p>Tell us what is going on and we will get your details to the team.</p>
+    <p>Cu&eacute;ntanos qu&eacute; pasa y le pasamos tus datos al equipo.</p>
+    <button class="open" id="open">Open chat / Abrir chat</button>
+    <small>This is an automated assistant. A person from the team follows up. / Este es un asistente autom&aacute;tico. Una persona del equipo te contacta.</small>
+  </main>
+  <!-- Address format: chat.html?shop=garza-plumbing&name=Garza%20Plumbing  (shop is the business id) -->
+  <script>
+    (function () {
+      var q = new URLSearchParams(location.search);
+      var shop = (q.get("shop") || "").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 60);
+      var name = (q.get("name") || "").slice(0, 60);
+      if (!shop) { document.querySelector("main").innerHTML = "<p>This chat link is missing its shop. Please ask the shop for a new one.</p>"; return; }
+      if (name) { document.title = name + " | Chat"; document.getElementById("shop-name").textContent = name; }
+      var s = document.createElement("script");
+      s.src = "widget.js";
+      s.setAttribute("data-business", shop);
+      s.setAttribute("data-endpoint", "https://hlzmldcebgoeyxmrefcw.supabase.co/functions/v1/web-chat");
+      s.setAttribute("data-open", "true");
+      if (name) s.setAttribute("data-title", name);
+      document.body.appendChild(s);
+      document.getElementById("open").onclick = function () {
+        var b = document.querySelector(".vss-btn"); if (b && !document.querySelector(".vss-panel.open")) b.click();
+      };
+    })();
+  </script>
+</body>
+</html>
