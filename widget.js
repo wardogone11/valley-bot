@@ -63,6 +63,8 @@
     ".vss-bot{background:#fff;align-self:flex-start;border-bottom-left-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.06)}",
     ".vss-me{background:" + COLOR + ";color:#fff;align-self:flex-end;border-bottom-right-radius:6px}",
     ".vss-typing{color:#6b7a73;letter-spacing:.2em}",
+    ".vss-team{border-left:4px solid #f5a524}",
+    ".vss-team:before{content:'From the team / Del equipo';display:block;font-size:11px;font-weight:700;color:#8a5a00;margin-bottom:2px}",
     ".vss-form{display:flex;align-items:flex-end;gap:6px;padding:10px 10px 12px;border-top:1px solid #e1e7e3;background:#fff}",
     ".vss-form textarea{flex:1;border:1px solid #d7dfda;background:#f6f8f6;border-radius:21px;padding:10px 16px;font:inherit;line-height:1.35;color:inherit;outline:none;min-width:0;resize:none;max-height:120px;overflow-y:auto;display:block}",
     ".vss-form textarea:focus{border-color:" + COLOR + ";background:#fff}",
@@ -141,7 +143,34 @@
   document.body.appendChild(panel);
   document.body.appendChild(btn);
 
-  state.messages.forEach(function (m) { addBubble(m.from, m.text); });
+  state.messages.forEach(function (m) { addBubble(m.from, m.text, m.from === "team" ? "vss-team" : ""); });
+
+  // When the shop answers from its dashboard, the reply shows up here. Checked every 8 seconds
+  // while the chat is open and every 30 while it is closed, only after the visitor has written,
+  // only while the page is visible, and only for a day after the last message.
+  var lastPoll = 0;
+  setInterval(function () {
+    if (document.hidden || !hasStarted()) return;
+    var open = panel.classList.contains("open");
+    if (Date.now() - lastPoll < (open ? 8000 : 30000)) return;
+    if (state.lastAt && Date.now() - state.lastAt > 86400000) return;
+    lastPoll = Date.now();
+    fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ businessId: BUSINESS, sessionId: state.sessionId, poll: state.teamSince || state.startedAt || "" }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        (data.messages || []).forEach(function (m) {
+          state.teamSince = m.created_at;
+          remember("team", m.content);
+          addBubble("team", m.content, "vss-team");
+        });
+        if (data.messages && data.messages.length && !open) { hideNudge(); panel.classList.add("open"); }
+      })
+      .catch(function () {});
+  }, 2000);
 
   // After hours, a small bubble invites the visitor to write anyway (once per visit).
   var nudge = null;
@@ -196,12 +225,18 @@
       body: JSON.stringify({ businessId: BUSINESS, sessionId: state.sessionId, message: text }),
     })
       .then(function (r) { return r.json(); })
-      .then(function (data) { return data.reply || "Sorry, something went wrong. Please call us. / Disculpa, hubo un problema. Por favor llámanos."; })
+      .then(function (data) {
+        // The shop is answering this chat itself, so there is no automatic reply; theirs comes by polling.
+        if (data.quiet) return null;
+        return data.reply || "Sorry, something went wrong. Please call us. / Disculpa, hubo un problema. Por favor llámanos.";
+      })
       .catch(function () { return "We couldn't connect. Please check your internet and try again. / No pudimos conectar. Intenta de nuevo."; })
       .then(function (reply) {
         log.removeChild(typing);
-        remember("bot", reply);
-        addBubble("bot", reply);
+        if (reply) {
+          remember("bot", reply);
+          addBubble("bot", reply);
+        }
         setBusy(false);
         input.focus();
       });
@@ -306,6 +341,8 @@
 
   function remember(from, text) {
     state.messages.push({ from: from, text: text });
+    state.lastAt = Date.now();
+    if (from === "me" && !state.startedAt) state.startedAt = new Date().toISOString();
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
   }
 

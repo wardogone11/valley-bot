@@ -38,7 +38,7 @@
       if (!shop) { document.querySelector("main").innerHTML = "<p>This chat link is missing its shop. Please ask the shop for a new one.</p>"; return; }
       if (name) { document.title = name + " | Chat"; document.getElementById("shop-name").textContent = name; }
       var s = document.createElement("script");
-      s.src = "widget.js?v=20261016b";
+      s.src = "widget.js?v=20261017";
       s.setAttribute("data-business", shop);
       s.setAttribute("data-endpoint", "https://hlzmldcebgoeyxmrefcw.supabase.co/functions/v1/web-chat");
       s.setAttribute("data-open", "true");
