@@ -45,6 +45,17 @@
     .pick { margin: 0 0 14px; padding: 9px 12px; font: inherit; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
     .actions button { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 8px 14px; font: inherit; font-size: 14px; cursor: pointer; }
     .issue { margin: 6px 0 4px; }
+    .settings { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; max-width: 640px; }
+    .settings h2 { margin: 0 0 4px; font-size: 20px; }
+    .field { display: block; margin: 16px 0 0; }
+    .field.check { display: flex; gap: 10px; align-items: flex-start; }
+    .field.check input { width: 20px; height: 20px; margin-top: 2px; flex: none; }
+    .flabel { display: block; font-weight: 600; }
+    .fhint { display: block; color: var(--muted); font-size: 14px; margin: 2px 0 6px; }
+    .count { text-align: right; margin-top: 4px; }
+    .settings textarea, .settings input[type=email], .settings input[type=tel], .settings input[type=url] { width: 100%; box-sizing: border-box; font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
+    .save { margin-top: 18px; background: var(--brand); color: #fff; border: 0; border-radius: 8px; padding: 10px 22px; font: inherit; font-weight: 600; cursor: pointer; }
+    .save:disabled { opacity: .6; }
     .meta { color: var(--muted); font-size: 14px; display: flex; gap: 14px; flex-wrap: wrap; }
     .meta a { color: var(--brand); font-weight: 600; text-decoration: none; }
     .convo { border-top: 1px solid var(--line); padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 6px; background: var(--bg); }
@@ -87,6 +98,7 @@
     var app = document.getElementById("app");
     var key = null, leads = [], me = null, filter = "all", business = "all", lastUpdated = null, timer = null;
     var view = "leads", results = null, resultsFor = null, loadingResults = false;
+    var settings = null, settingsFor = null, loadingSettings = false, settingsNote = "";
 
     try { key = localStorage.getItem(KEY_STORE); } catch (e) {}
     key ? refresh() : showLogin();
@@ -189,6 +201,7 @@
       app.appendChild(header);
       app.appendChild(viewTabs());
       if (view === "results") { renderResults(); return; }
+      if (view === "settings") { renderSettings(); return; }
 
       var stats = el("div", "stats");
       [["needsCall", counts.needsCall, "Need a call now", counts.needsCall > 0],
@@ -214,7 +227,7 @@
 
     function viewTabs() {
       var tabs = el("div", "tabs");
-      [["leads", "Leads"], ["results", "Results"]].forEach(function (t) {
+      [["leads", "Leads"], ["results", "Results"], ["settings", "Settings"]].forEach(function (t) {
         var b = el("button", view === t[0] ? "on" : "", t[1]);
         b.onclick = function () { view = t[0]; render(); };
         tabs.appendChild(b);
@@ -244,6 +257,110 @@
       }).catch(function () {
         results = { error: true }; resultsFor = want;
       }).then(function () { loadingResults = false; render(); });
+    }
+
+    function loadSettings(want) {
+      if (loadingSettings) return;
+      loadingSettings = true;
+      call({ action: "get_settings", businessId: want }).then(function (d) {
+        settings = d; settingsFor = want;
+      }).catch(function () {
+        settings = { error: true }; settingsFor = want;
+      }).then(function () { loadingSettings = false; render(); });
+    }
+
+    function renderSettings() {
+      if (me.admin) app.appendChild(businessPicker(function () { settings = null; settingsNote = ""; render(); }));
+      var want = me.admin ? business : "mine";
+      if (me.admin && want === "all") { app.appendChild(el("p", "empty", "Pick a business above to see its settings.")); return; }
+      if (!settings || settingsFor !== want) {
+        app.appendChild(el("p", "empty", "Loading settings…"));
+        loadSettings(want);
+        return;
+      }
+      if (settings.error) { app.appendChild(el("p", "empty", "Couldn't load the settings. Check your internet and try again.")); return; }
+      var s = settings.settings;
+      var form = el("form", "settings");
+
+      function field(label, hint, input) {
+        var wrap = el("label", "field");
+        wrap.appendChild(el("span", "flabel", label));
+        if (hint) wrap.appendChild(el("span", "fhint", hint));
+        wrap.appendChild(input);
+        form.appendChild(wrap);
+        return input;
+      }
+      function check(label, hint, on) {
+        var wrap = el("label", "field check");
+        var box = el("input");
+        box.type = "checkbox";
+        box.checked = Boolean(on);
+        wrap.appendChild(box);
+        var words = el("span");
+        words.appendChild(el("span", "flabel", label));
+        if (hint) words.appendChild(el("span", "fhint", hint));
+        wrap.appendChild(words);
+        form.appendChild(wrap);
+        return box;
+      }
+
+      form.appendChild(el("h2", null, s.name));
+      form.appendChild(el("p", "fhint", s.twilio_number ? "Your Valle Listo number: " + prettyPhone(s.twilio_number) : "No texting number yet. Website chat works now."));
+
+      var facts = el("textarea");
+      facts.rows = 8;
+      facts.maxLength = settings.maxFacts;
+      facts.value = s.facts || "";
+      field("What the assistant can tell customers", "Hours, payment, brands, free estimates, emergency service. One per line. The assistant only shares what is written here.", facts);
+      var counter = el("span", "fhint count", "");
+      function count() { counter.textContent = facts.value.length + " of " + settings.maxFacts; }
+      facts.addEventListener("input", count); count();
+      form.appendChild(counter);
+
+      var email = el("input"); email.type = "email"; email.value = s.alert_email || ""; email.autocomplete = "email";
+      field("Alert email", "New customers and emergencies are emailed here.", email);
+      var phone = el("input"); phone.type = "tel"; phone.value = s.dispatcher_phone ? prettyPhone(s.dispatcher_phone) : ""; phone.autocomplete = "tel";
+      field("Alert text number", "Emergencies and new customers are texted to this cell phone.", phone);
+
+      var reminder = check("Morning reminder", "Each morning, get a short list of customers still waiting on a call back.", s.daily_reminder);
+
+      var missed, reviews, link;
+      if (me.admin) {
+        missed = check("Missed call text back (admin)", "Callers who reach the Valle Listo number get one text back.", s.missed_call_text);
+        reviews = check("Review requests (admin)", "Shows the Ask for a review button on finished jobs.", s.review_requests);
+        link = el("input"); link.type = "url"; link.value = s.review_link || "";
+        field("Google review link (admin)", "Starts with https://", link);
+      } else {
+        form.appendChild(el("p", "fhint", "Missed call text back: " + (s.missed_call_text ? "On" : "Off") +
+          ". Review requests: " + (s.review_requests && s.review_link ? "On" : "Off") + ". Ask us to change these."));
+      }
+
+      var save = el("button", "save", "Save");
+      save.type = "submit";
+      form.appendChild(save);
+      var note = el("p", "fhint note", settingsNote);
+      form.appendChild(note);
+
+      form.onsubmit = function (e) {
+        e.preventDefault();
+        save.disabled = true;
+        note.textContent = "Saving…";
+        var fields = { facts: facts.value, alert_email: email.value, dispatcher_phone: phone.value, daily_reminder: reminder.checked };
+        if (me.admin) { fields.missed_call_text = missed.checked; fields.review_requests = reviews.checked; fields.review_link = link.value; }
+        fetch(API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Dashboard-Key": key },
+          body: JSON.stringify({ action: "save_settings", businessId: me.admin ? business : "mine", fields: fields }),
+        }).then(function (r) {
+          return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || "Couldn't save"); return d; });
+        }).then(function (d) {
+          settings = d; settingsNote = "Saved."; render();
+        }).catch(function (err) {
+          save.disabled = false;
+          note.textContent = err.message || "Couldn't save, try again.";
+        });
+      };
+      app.appendChild(form);
     }
 
     function renderResults() {
