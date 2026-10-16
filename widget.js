@@ -39,31 +39,44 @@
   // A visitor who has only seen the greeting gets the greeting that fits the time of day.
   if (state.messages.length === 1 && state.messages[0].from === "bot") state.messages[0].text = GREETING;
 
+  var FONT = "'Red Hat Text',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif";
   var css = [
-    ".vss-btn{position:fixed;right:20px;bottom:20px;width:60px;height:60px;border-radius:50%;border:0;cursor:pointer;",
-    "background:" + COLOR + ";color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:2147483000;display:flex;align-items:center;justify-content:center}",
+    ".vss-btn{position:fixed;right:20px;bottom:20px;width:62px;height:62px;border-radius:50%;border:0;cursor:pointer;",
+    "background:" + COLOR + ";color:#fff;box-shadow:0 10px 26px rgba(0,0,0,.28);z-index:2147483000;display:flex;align-items:center;justify-content:center;transition:transform .15s ease}",
+    ".vss-btn:hover{transform:scale(1.05)}",
     ".vss-btn svg{width:28px;height:28px}",
-    ".vss-panel{position:fixed;right:20px;bottom:92px;width:360px;max-width:calc(100vw - 32px);height:520px;max-height:calc(100vh - 120px);",
-    "background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.25);display:none;flex-direction:column;overflow:hidden;",
-    "z-index:2147483000;font:15px/1.4 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#1d1d1f}",
+    ".vss-btn:focus-visible,.vss-panel button:focus-visible{outline:3px solid #ffb21f;outline-offset:2px}",
+    ".vss-panel{position:fixed;right:20px;bottom:96px;width:380px;max-width:calc(100vw - 32px);height:560px;max-height:calc(100vh - 124px);",
+    "background:#fff;border-radius:22px;box-shadow:0 24px 60px rgba(0,0,0,.28),0 0 0 1px rgba(0,0,0,.04);display:none;flex-direction:column;overflow:hidden;",
+    "z-index:2147483000;font:15px/1.45 " + FONT + ";color:#13221c}",
     ".vss-panel.open{display:flex}",
-    ".vss-head{background:" + COLOR + ";color:#fff;padding:14px 16px;font-weight:600;display:flex;justify-content:space-between;align-items:center}",
-    ".vss-head small{display:block;font-weight:400;opacity:.85;font-size:12px}",
-    ".vss-x{background:none;border:0;color:#fff;font-size:22px;cursor:pointer;line-height:1}",
-    ".vss-log{flex:1;overflow-y:auto;padding:14px;background:#f5f6f7;display:flex;flex-direction:column;gap:8px}",
-    ".vss-msg{max-width:82%;padding:9px 12px;border-radius:14px;white-space:pre-wrap;word-wrap:break-word}",
-    ".vss-bot{background:#fff;align-self:flex-start;border-bottom-left-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,.08)}",
-    ".vss-me{background:" + COLOR + ";color:#fff;align-self:flex-end;border-bottom-right-radius:4px}",
-    ".vss-typing{opacity:.6;font-style:italic}",
-    ".vss-form{display:flex;border-top:1px solid #e3e5e8;background:#fff}",
-    ".vss-form input{flex:1;border:0;padding:14px;font:inherit;outline:none;min-width:0}",
-    ".vss-form button{border:0;background:none;color:" + COLOR + ";font-weight:600;padding:0 16px;cursor:pointer;font:inherit}",
-    ".vss-form button:disabled{opacity:.4;cursor:default}",
-    ".vss-form .vss-clip{padding:0 6px 0 12px;font-size:20px;line-height:1}",
-    ".vss-nudge{position:fixed;right:20px;bottom:92px;max-width:260px;background:#fff;color:#1d1d1f;border-radius:14px;padding:12px 34px 12px 14px;",
-    "box-shadow:0 8px 30px rgba(0,0,0,.25);z-index:2147483000;font:14px/1.4 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;cursor:pointer}",
-    ".vss-nx{position:absolute;top:4px;right:6px;background:none;border:0;font-size:20px;line-height:1;color:#5f6368;cursor:pointer}",
+    ".vss-head{background:" + COLOR + ";color:#fff;padding:16px 14px 16px 16px;display:flex;align-items:center;gap:12px}",
+    ".vss-av{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;font-weight:700;font-size:15px;flex:none;letter-spacing:.02em}",
+    ".vss-ttl{flex:1;min-width:0;font-weight:700;font-size:16px;line-height:1.25}",
+    ".vss-ttl small{display:flex;align-items:center;gap:6px;font-weight:400;color:#fff;opacity:.9;font-size:12.5px;margin-top:2px}",
+    ".vss-ttl small::before{content:'';width:7px;height:7px;border-radius:50%;background:#5ee2a8;flex:none}",
+    ".vss-ttl.closed small::before{background:#ffb21f}",
+    ".vss-x{background:rgba(255,255,255,.12);border:0;color:#fff;width:34px;height:34px;border-radius:50%;font-size:20px;cursor:pointer;line-height:1;flex:none}",
+    ".vss-x:hover{background:rgba(255,255,255,.22)}",
+    ".vss-log{flex:1;overflow-y:auto;padding:18px 14px;background:#eef2ee;display:flex;flex-direction:column;gap:10px}",
+    ".vss-msg{max-width:84%;padding:10px 14px;border-radius:18px;white-space:pre-wrap;word-wrap:break-word}",
+    ".vss-bot{background:#fff;align-self:flex-start;border-bottom-left-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.06)}",
+    ".vss-me{background:" + COLOR + ";color:#fff;align-self:flex-end;border-bottom-right-radius:6px}",
+    ".vss-typing{color:#6b7a73;letter-spacing:.2em}",
+    ".vss-form{display:flex;align-items:flex-end;gap:6px;padding:10px 10px 12px;border-top:1px solid #e1e7e3;background:#fff}",
+    ".vss-form textarea{flex:1;border:1px solid #d7dfda;background:#f6f8f6;border-radius:21px;padding:10px 16px;font:inherit;line-height:1.35;color:inherit;outline:none;min-width:0;resize:none;max-height:120px;overflow-y:auto;display:block}",
+    ".vss-form textarea:focus{border-color:" + COLOR + ";background:#fff}",
+    ".vss-form button{border:0;background:none;cursor:pointer;font:inherit;display:grid;place-items:center;flex:none}",
+    ".vss-form button:disabled{opacity:.35;cursor:default}",
+    ".vss-send{height:42px;padding:0 16px 0 14px;border-radius:999px;background:" + COLOR + "!important;color:#fff;display:flex!important;align-items:center;gap:6px;font-weight:700!important;font-size:15px}",
+    ".vss-send svg,.vss-clip svg{width:20px;height:20px}",
+    ".vss-clip{width:38px;height:38px;border-radius:50%;color:#5b6b64}",
+    ".vss-clip:not(:disabled):hover{background:#eef2ee}",
+    ".vss-nudge{position:fixed;right:20px;bottom:96px;max-width:270px;background:#fff;color:#13221c;border-radius:18px;padding:13px 36px 13px 15px;",
+    "box-shadow:0 14px 36px rgba(0,0,0,.24);z-index:2147483000;font:14px/1.45 " + FONT + ";cursor:pointer}",
+    ".vss-nx{position:absolute;top:6px;right:8px;background:none;border:0;font-size:20px;line-height:1;color:#5f6368;cursor:pointer}",
     "@media (max-width:480px){.vss-panel{right:0;bottom:0;width:100vw;max-width:100vw;height:100%;max-height:100%;border-radius:0}}",
+    "@media (prefers-reduced-motion:reduce){.vss-btn{transition:none}.vss-btn:hover{transform:none}}",
   ].join("");
   var style = document.createElement("style");
   style.textContent = css;
@@ -78,30 +91,40 @@
   panel.setAttribute("role", "dialog");
   panel.setAttribute("aria-label", TITLE + " chat");
   var head = el("div", "vss-head");
-  var titleBox = el("div");
+  var av = el("div", "vss-av");
+  av.setAttribute("aria-hidden", "true");
+  av.textContent = TITLE.split(/\s+/).filter(Boolean).slice(0, 2).map(function (w) { return w.charAt(0).toUpperCase(); }).join("");
+  var titleBox = el("div", "vss-ttl" + (CLOSED ? " closed" : ""));
   titleBox.textContent = TITLE;
   var sub = el("small");
-  sub.textContent = CLOSED ? "Closed now, message us anyway · Cerrado, escríbenos" : "English · Español";
+  sub.textContent = CLOSED ? "Closed now, message us anyway. Cerrado, escríbenos." : "Replies right away in English or Español";
   titleBox.appendChild(sub);
   var close = el("button", "vss-x");
+  close.type = "button";
   close.setAttribute("aria-label", "Close chat");
   close.textContent = "×";
+  head.appendChild(av);
   head.appendChild(titleBox);
   head.appendChild(close);
 
   var log = el("div", "vss-log");
   log.setAttribute("aria-live", "polite");
   var form = el("form", "vss-form");
-  var input = el("input");
+  // A text area so Return adds a new line; only the Send button sends.
+  var input = el("textarea");
+  input.rows = 1;
   input.placeholder = "Type a message / Escribe aquí";
   input.maxLength = 1000;
   input.setAttribute("aria-label", "Message");
-  var send = el("button");
+  // Grow with the message, up to the max-height in the CSS.
+  input.addEventListener("input", fitInput);
+  var send = el("button", "vss-send");
   send.type = "submit";
-  send.textContent = "Send";
+  send.setAttribute("aria-label", "Send / Enviar");
+  send.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.4 20.4l17.5-7.5a1 1 0 0 0 0-1.8L3.4 3.6a1 1 0 0 0-1.4 1.1L4 11l9 1-9 1-2 6.3a1 1 0 0 0 1.4 1.1z"/></svg><span>Send</span>';
   var clip = el("button", "vss-clip");
   clip.type = "button";
-  clip.textContent = "\uD83D\uDCCE";
+  clip.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5l-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.3 3.3 0 0 1 4.7 4.7l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/></svg>';
   clip.setAttribute("aria-label", "Attach a photo / Adjuntar una foto");
   var pick = el("input");
   pick.type = "file";
@@ -155,9 +178,13 @@
   var busy = false;
   form.onsubmit = function (e) {
     e.preventDefault();
+    sendMessage();
+  };
+  function sendMessage() {
     var text = input.value.trim();
     if (!text || busy) return;
     input.value = "";
+    fitInput();
     remember("me", text);
     addBubble("me", text);
     setBusy(true);
@@ -178,7 +205,12 @@
         setBusy(false);
         input.focus();
       });
-  };
+  }
+
+  function fitInput() {
+    input.style.height = "auto";
+    input.style.height = input.scrollHeight + 2 + "px";
+  }
 
   function hideNudge() {
     if (nudge && nudge.parentNode) nudge.parentNode.removeChild(nudge);
