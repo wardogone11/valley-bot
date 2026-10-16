@@ -149,7 +149,10 @@
       "Alert email": "Correo para avisos", "New customers and emergencies are emailed here.": "Los clientes nuevos y las emergencias llegan a este correo.",
       "Alert text number": "Celular para avisos", "Emergencies and new customers are texted to this cell phone.": "Las emergencias y los clientes nuevos llegan por texto a este celular.",
       "Morning reminder": "Recordatorio en la mañana", "Each morning, get a short list of customers still waiting on a call back.": "Cada mañana reciba una lista corta de los clientes que siguen esperando su llamada.",
-      "Ask us to change these.": "Pídanos cambiarlos.", "Save": "Guardar", "Saving…": "Guardando…", "Saved.": "Guardado.",
+      "Ask us to change these.": "Pídanos cambiarlos.",
+      "Monday results email": "Correo de resultados los lunes",
+      "Download all leads as a spreadsheet": "Descargar todos los clientes en una hoja de cálculo",
+      "Every Monday, an email with how many customers Valle Listo caught last week.": "Cada lunes, un correo con cuántos clientes le consiguió Valle Listo la semana pasada.", "Save": "Guardar", "Saving…": "Guardando…", "Saved.": "Guardado.",
       "Couldn't save, try again.": "No se guardó, intente otra vez.", "On": "Encendido", "Off": "Apagado",
       "You're talking": "Usted está atendiendo", "Send": "Enviar",
       "The assistant is paused. You're answering this customer.": "El asistente está en pausa. Usted está atendiendo a este cliente.",
@@ -286,6 +289,9 @@
       app.appendChild(stats);
 
       if (me.admin) app.appendChild(businessPicker(render));
+      var dl = el("button", "logout", "Download all leads as a spreadsheet");
+      dl.onclick = downloadLeads;
+      app.appendChild(dl);
 
       if (!shown.length) {
         app.appendChild(el("p", "empty", leads.length ? "Nothing here right now." : "No leads yet. They'll show up here as soon as someone texts or chats."));
@@ -393,6 +399,7 @@
       field("Alert text number", "Emergencies and new customers are texted to this cell phone.", phone);
 
       var reminder = check("Morning reminder", "Each morning, get a short list of customers still waiting on a call back.", s.daily_reminder);
+      var weekly = check("Monday results email", "Every Monday, an email with how many customers Valle Listo caught last week.", s.weekly_summary);
 
       var missed, reviews, link;
       if (me.admin) {
@@ -415,7 +422,7 @@
         e.preventDefault();
         save.disabled = true;
         note.textContent = T("Saving…");
-        var fields = { facts: facts.value, alert_email: email.value, dispatcher_phone: phone.value, daily_reminder: reminder.checked };
+        var fields = { facts: facts.value, alert_email: email.value, dispatcher_phone: phone.value, daily_reminder: reminder.checked, weekly_summary: weekly.checked };
         if (me.admin) { fields.missed_call_text = missed.checked; fields.review_requests = reviews.checked; fields.review_link = link.value; }
         fetch(API, {
           method: "POST",
@@ -653,6 +660,34 @@
       box.appendChild(form);
       box.appendChild(note);
       return box;
+    }
+
+    // Every lead this dashboard can see (the chosen business for the admin), as a CSV file that opens in Excel.
+    function downloadLeads() {
+      var rows = leads.filter(function (l) { return business === "all" || l.business_id === business; });
+      var head = ["Date", "Name", "Phone", "Address", "Problem", "Status", "Emergency", "Best time", "Heads up", "Came in by", "Done"];
+      if (me.admin) head.push("Business");
+      var lines = [head].concat(rows.map(function (l) {
+        var r = [new Date(l.created_at).toLocaleString(), l.name || "", l.callback_phone || (l.channel === "sms" ? prettyPhone(l.phone) : ""),
+          l.address || "", l.issue || "", LABEL[kind(l)], l.emergency ? "Yes" : "", l.preferred_time || "", l.urgency_note || "",
+          l.channel === "sms" ? (l.source === "missed_call" ? "Missed call" : "Text") : "Website chat", l.closed_at ? "Yes" : ""];
+        if (me.admin) r.push(l.business_name);
+        return r;
+      })).map(function (r) {
+        return r.map(function (v) {
+          var s = String(v);
+          // A cell starting with = + - @ could run as a formula in Excel; a leading ' keeps it plain text.
+          if (/^[=+\-@]/.test(s)) s = "'" + s;
+          return '"' + s.replace(/"/g, '""') + '"';
+        }).join(",");
+      });
+      var blob = new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "valle-listo-leads-" + new Date().toISOString().slice(0, 10) + ".csv";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
     }
 
     function prettyPhone(p) {
