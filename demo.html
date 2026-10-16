@@ -3,44 +3,246 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Chat Box Demo</title>
+  <title>Valley Smart Services | Chat demo</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b6e4f'/%3E%3Cpath d='M8 9h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H13l-5 4V11a2 2 0 0 1 2-2z' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;700;900&family=Red+Hat+Text:wght@400;500;700&display=swap">
   <style>
-    :root { --brand: #0b6e4f; --ink: #1d1d1f; --muted: #5f6368; --bg: #ffffff; --band: #f2f6f4; }
+    /* A sample Valley shop website with Valle Listo's real chat box.
+       Design plan: the page is about one thing, a customer message getting answered, so the hero's
+       memorable element is a stack of real customer messages you can send with one tap. Everything
+       else is quiet: plain lists instead of boxed cards, one accent (Valley sun) used for actions only.
+       Palette: night teal #05211c, deep teal #0a3329, sun #ffb21f, field green #0b6e4f,
+       sun-bleached stucco #eef2ee, alert red #c8322b. Type: Red Hat Display (headlines), Red Hat Text. */
+    :root {
+      --night: #05211c; --night-2: #0a3329; --night-ink: #f1faf6; --night-muted: #a9c9bc; --night-line: #1f4b3f;
+      --sun: #ffb21f; --sun-ink: #241500;
+      --stucco: #eef2ee; --ink: #0d211b; --muted: #4f5f57; --line: #d3ddd6;
+      --field: #0b6e4f; --field-soft: #dcebe3; --alert: #c8322b;
+      --display: "Red Hat Display", "Segoe UI", system-ui, sans-serif;
+      --body: "Red Hat Text", "Segoe UI", system-ui, sans-serif;
+    }
     * { box-sizing: border-box; }
-    body { margin: 0; font: 17px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: var(--bg); }
-    header { background: var(--brand); color: #fff; padding: 18px 16px; }
-    header .wrap, main .wrap { max-width: 900px; margin: 0 auto; }
-    header strong { font-size: 20px; }
-    .hero { background: var(--band); padding: 56px 16px; }
-    h1 { font-size: clamp(28px, 5vw, 42px); line-height: 1.15; margin: 0 0 12px; }
-    .hero p { color: var(--muted); margin: 0; max-width: 560px; }
-    .services { padding: 40px 16px 120px; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-    .card { border: 1px solid #e3e5e8; border-radius: 12px; padding: 18px; }
-    .card h2 { font-size: 18px; margin: 0 0 6px; }
-    .card p { margin: 0; color: var(--muted); font-size: 15px; }
-    .note { margin-top: 24px; color: var(--muted); font-size: 15px; }
+    body { margin: 0; background: var(--stucco); color: var(--ink); font: 17px/1.6 var(--body); }
+    h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; }
+    p { margin: 0; }
+    a { color: inherit; }
+    button { font: inherit; color: inherit; }
+    :focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+
+    /* Demo note: one quiet line, not a banner fighting the shop's own header */
+    .demo-note { background: var(--night-2); color: var(--night-muted); font-size: 14px; border-bottom: 1px solid var(--night-line); }
+    .demo-note .wrap { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; padding-block: 9px; }
+    .demo-note b { color: var(--night-ink); font-weight: 700; }
+    .demo-note a { color: var(--sun); font-weight: 700; text-decoration: none; }
+
+    /* Shop header and hero share one dark field */
+    .top { background: var(--night); color: var(--night-ink); position: relative; overflow: hidden; }
+    .top::after { /* late afternoon sun low on the horizon */
+      content: ""; position: absolute; right: -180px; top: -220px; width: 620px; height: 620px; border-radius: 50%;
+      background: radial-gradient(circle, #ffb21f2e 0%, #ffb21f10 40%, transparent 70%); pointer-events: none;
+    }
+    .nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 22px; position: relative; z-index: 1; }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .mark { width: 44px; height: 44px; border-radius: 50% 50% 12px 12px; background: var(--field); display: grid; place-items: center; flex: none; }
+    .mark svg { width: 24px; height: 24px; }
+    .brand strong { font-family: var(--display); font-size: 21px; font-weight: 900; display: block; line-height: 1.1; letter-spacing: -.01em; }
+    .brand small { color: var(--night-muted); font-size: 14px; }
+    .hours { text-align: right; font-size: 14px; color: var(--night-muted); line-height: 1.35; }
+    .hours b { color: var(--night-ink); display: block; font-size: 15px; }
+
+    .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 56px; align-items: center; padding-block: 40px 84px; position: relative; z-index: 1; }
+    .hero h1 { font-size: clamp(38px, 5.6vw, 64px); line-height: 1.02; letter-spacing: -.025em; font-weight: 900; max-width: 11em; }
+    .hero .lead { color: var(--night-muted); font-size: 19px; max-width: 30em; margin-top: 20px; }
+    .hero .lead-es { color: var(--night-ink); opacity: .7; font-size: 16px; margin-top: 10px; max-width: 30em; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; }
+    .btn { border-radius: 999px; padding: 14px 24px; font-weight: 700; cursor: pointer; border: 0; font-size: 17px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
+    .btn-sun { background: var(--sun); color: var(--sun-ink); }
+    .btn-sun:hover { background: #ffc24d; }
+    .btn-line { background: transparent; color: var(--night-ink); box-shadow: inset 0 0 0 2px var(--night-line); }
+    .btn-line:hover { box-shadow: inset 0 0 0 2px var(--night-muted); }
+
+    /* The memorable element: real customer messages, ready to send */
+    .thread { position: relative; }
+    .thread-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .thread-head h2 { font-size: 20px; font-weight: 700; }
+    .thread-head span { color: var(--night-muted); font-size: 14px; }
+    .msgs { display: flex; flex-direction: column; gap: 12px; }
+    .say {
+      align-self: flex-end; max-width: 92%; text-align: left; cursor: pointer; border: 0;
+      background: var(--field); color: #fff; border-radius: 22px 22px 6px 22px; padding: 14px 18px 12px;
+      box-shadow: 0 10px 24px #00000033; transition: transform .15s ease, background .15s ease;
+    }
+    .say:nth-child(even) { align-self: flex-start; border-radius: 22px 22px 22px 6px; background: #12805e; }
+    .say:hover { transform: translateY(-2px); background: #0e7d5a; }
+    .say .who { display: flex; justify-content: space-between; gap: 16px; font-size: 13px; color: #cfeee0; margin-top: 6px; }
+    .say .who em { font-style: normal; color: var(--sun); font-weight: 700; }
+    .say.urgent { background: var(--alert); }
+    .say.urgent .who { color: #ffd9d6; }
+    .thread-foot { color: var(--night-muted); font-size: 14px; margin-top: 16px; }
+
+    /* Services: a plain list with room to breathe, not a card kit */
+    .section { padding-block: 72px; }
+    .section h2 { font-size: clamp(28px, 3.6vw, 40px); letter-spacing: -.015em; font-weight: 900; }
+    .intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: end; margin-bottom: 40px; }
+    .intro p { color: var(--muted); max-width: 32em; }
+    .services { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 2px solid var(--ink); }
+    .service { padding: 26px 28px 8px 0; }
+    .service + .service { padding-left: 28px; border-left: 1px solid var(--line); }
+    .service svg { width: 30px; height: 30px; color: var(--field); }
+    .service h3 { font-size: 22px; margin: 14px 0 6px; }
+    .service p { color: var(--muted); font-size: 16px; }
+    .service ul { margin: 14px 0 0; padding-left: 18px; color: var(--ink); font-size: 15px; }
+    .service li { margin-bottom: 4px; }
+    .service li::marker { color: var(--field); }
+
+    /* How a request moves: a real sequence, so it gets numbers */
+    .steps { background: #fff; border-block: 1px solid var(--line); }
+    .flow { list-style: none; margin: 36px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; counter-reset: step; }
+    .flow li { counter-increment: step; position: relative; padding-top: 58px; }
+    .flow li::before {
+      content: counter(step); position: absolute; top: 0; left: 0; width: 42px; height: 42px; border-radius: 50%;
+      background: var(--night); color: var(--sun); font: 900 18px/42px var(--display); text-align: center;
+    }
+    .flow li:not(:last-child)::after { content: ""; position: absolute; top: 21px; left: 54px; right: -20px; height: 2px; background: var(--line); }
+    .flow h3 { font-size: 19px; margin-bottom: 6px; }
+    .flow p { color: var(--muted); font-size: 16px; }
+
+    /* Emergencies */
+    .urgent-row { display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; gap: 24px; align-items: center; }
+    .urgent-row .bar { align-self: stretch; background: var(--alert); border-radius: 4px; }
+    .urgent-row h2 { font-size: clamp(24px, 3vw, 32px); }
+    .urgent-row p { color: var(--muted); margin-top: 6px; max-width: 38em; }
+    .btn-alert { background: var(--alert); color: #fff; }
+    .btn-alert:hover { background: #b02a24; }
+
+    footer { padding-block: 0 120px; color: var(--muted); font-size: 14px; }
+    footer .wrap > div { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 22px; }
+    footer a { color: var(--field); font-weight: 700; text-decoration: none; }
+
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: minmax(0, 1fr); gap: 44px; padding-block: 24px 56px; }
+      .intro { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+      .services { grid-template-columns: minmax(0, 1fr); }
+      .service, .service + .service { padding: 24px 0 18px; border-left: 0; }
+      .service + .service { border-top: 1px solid var(--line); }
+      .flow { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+      .flow li { padding: 4px 0 0 60px; }
+      .flow li:not(:last-child)::after { display: none; }
+    }
+    @media (max-width: 560px) {
+      .hours { display: none; }
+      .actions .btn { flex: 1 1 100%; }
+      .urgent-row { grid-template-columns: 6px minmax(0, 1fr); }
+      .urgent-row .btn { grid-column: 2; justify-self: start; }
+    }
+    @media (prefers-reduced-motion: reduce) { .say { transition: none; } .say:hover { transform: none; } }
   </style>
 </head>
 <body>
-  <header><div class="wrap"><strong id="shop-name">Valley Smart Services</strong> &nbsp;·&nbsp; <span id="shop-place">Harlingen, TX</span></div></header>
-  <section class="hero">
-    <div class="wrap">
-      <h1>Heating, cooling, plumbing and electrical across the Valley.</h1>
-      <p>Tap the chat button in the corner to tell us what's going on. We answer in English and Español, day or night.</p>
-      <p class="note">Demo page: the chat box is live and talks to the real bot.</p>
+  <div class="demo-note"><div class="wrap">
+    <span><b>Demo shop.</b> This page shows how Valle Listo works on a real shop's website. The chat is live.</span>
+    <a href="index.html">About Valle Listo</a>
+  </div></div>
+
+  <header class="top">
+    <div class="wrap nav">
+      <div class="brand">
+        <div class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></div>
+        <div><strong id="shop-name">Valley Smart Services</strong><small id="shop-place">Harlingen, Texas</small></div>
+      </div>
+      <div class="hours"><b>Chat open 24 hours</b>Crews out Monday to Saturday</div>
     </div>
-  </section>
+
+    <div class="wrap hero">
+      <div>
+        <h1>AC, plumbing and electrical help across the Valley</h1>
+        <p class="lead">Tell us what is going on, any time of day. We answer right away, get your details, and call you with a time.</p>
+        <p class="lead-es" lang="es">Escribanos en espanol o en ingles. Le contestamos al instante.</p>
+        <div class="actions">
+          <button class="btn btn-sun" type="button" data-open-chat>Message us now</button>
+          <a class="btn btn-line" href="#services">See services</a>
+        </div>
+      </div>
+
+      <div class="thread" aria-labelledby="try-title">
+        <div class="thread-head"><h2 id="try-title">Try it as a customer</h2><span>Tap a message to send it</span></div>
+        <div class="msgs">
+          <button class="say" type="button" data-say="My AC is blowing warm air and it is 98 outside">My AC is blowing warm air and it is 98 outside<span class="who"><span>In English</span><em>Send</em></span></button>
+          <button class="say" type="button" lang="es" data-say="Hola, se me esta saliendo el agua del boiler">Hola, se me esta saliendo el agua del boiler<span class="who"><span>En espanol</span><em>Enviar</em></span></button>
+          <button class="say" type="button" data-say="Mi breaker keeps tripping, can someone come today?">Mi breaker keeps tripping, can someone come today?<span class="who"><span>Spanglish</span><em>Send</em></span></button>
+          <button class="say urgent" type="button" data-say="I smell gas in my kitchen">I smell gas in my kitchen<span class="who"><span>An emergency</span><em>Send</em></span></button>
+        </div>
+        <p class="thread-foot">Or type anything you like in the chat.</p>
+      </div>
+    </div>
+  </header>
+
   <main>
-    <div class="wrap services">
-      <div class="card"><h2>AC &amp; Heating</h2><p>Repairs, tune ups and new systems.</p></div>
-      <div class="card"><h2>Plumbing</h2><p>Leaks, clogs, water heaters.</p></div>
-      <div class="card"><h2>Electrical</h2><p>Panels, outlets, lighting.</p></div>
-    </div>
+    <section class="section" id="services">
+      <div class="wrap">
+        <div class="intro">
+          <h2>What we fix</h2>
+          <p>Homes and small businesses from Brownsville to Mission. Clear prices, clean work, and we show up when we say we will.</p>
+        </div>
+        <div class="services">
+          <div class="service">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>
+            <h3>Air conditioning and heating</h3>
+            <p>Valley summers are long. We keep the cold air coming.</p>
+            <ul><li>Repairs on all brands</li><li>Tune ups and coil cleaning</li><li>New system installs</li></ul>
+          </div>
+          <div class="service">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.7C9 6.5 6 9.9 6 14a6 6 0 0 0 12 0c0-4.1-3-7.5-6-11.3z"/></svg>
+            <h3>Plumbing</h3>
+            <p>Leaks, clogs and water heaters, fixed right the first time.</p>
+            <ul><li>Leak detection and repair</li><li>Drain cleaning</li><li>Water heater service</li></ul>
+          </div>
+          <div class="service">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>
+            <h3>Electrical</h3>
+            <p>Safe work to code by licensed electricians.</p>
+            <ul><li>Panels and breakers</li><li>Outlets and lighting</li><li>Ceiling fans</li></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section steps">
+      <div class="wrap">
+        <h2>From message to appointment</h2>
+        <ol class="flow">
+          <li><h3>You message us</h3><p>Use the chat on this page, day or night, in English, Spanish or both.</p></li>
+          <li><h3>We get the details</h3><p>Your name, address and what is wrong. Send a photo if it helps.</p></li>
+          <li><h3>We call with a time</h3><p>Our office calls you back to set a time that works for you.</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap urgent-row">
+        <div class="bar" aria-hidden="true"></div>
+        <div>
+          <h2>Gas smell, flooding or sparks</h2>
+          <p>Tell us in the chat and our team is alerted right away. If you smell gas, get everyone outside first.</p>
+        </div>
+        <button class="btn btn-alert" type="button" data-open-chat>Get help now</button>
+      </div>
+    </section>
   </main>
+
+  <footer>
+    <div class="wrap"><div>
+      <span>Valley Smart Services is a sample business for this demo.</span>
+      <span>Chat by <a href="index.html">Valle Listo</a></span>
+    </div></div>
+  </footer>
 
   <!--
     A real website only needs one line:
-      <script src="widget.js" data-business="your-business-id" data-endpoint="https://hlzmldcebgoeyxmrefcw.supabase.co/functions/v1/web-chat"></script>
+      <script src="widget.js?v=20261016" data-business="your-business-id" data-endpoint="https://hlzmldcebgoeyxmrefcw.supabase.co/functions/v1/web-chat"></script>
     This demo page builds that line from the address, so one page can show any shop's name:
       demo.html?shop=garza-plumbing&name=Garza%20Plumbing
     (shop is the business id; name is what the chat box and page header show.)
@@ -53,14 +255,37 @@
       if (name) {
         document.title = name + " | Chat demo";
         document.getElementById("shop-name").textContent = name;
-        document.getElementById("shop-place").textContent = "Chat demo";
+        document.getElementById("shop-place").textContent = "Rio Grande Valley, Texas";
       }
       var s = document.createElement("script");
-      s.src = "widget.js";
+      s.src = "widget.js?v=20261016";
       s.setAttribute("data-business", shop);
       s.setAttribute("data-endpoint", "https://hlzmldcebgoeyxmrefcw.supabase.co/functions/v1/web-chat");
       if (name) s.setAttribute("data-title", name);
       document.body.appendChild(s);
+
+      function openChat() {
+        var panel = document.querySelector(".vss-panel");
+        if (!panel) return null;
+        if (!panel.classList.contains("open")) document.querySelector(".vss-btn").click();
+        return panel;
+      }
+      document.querySelectorAll("[data-open-chat]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var p = openChat();
+          if (p) { var i = p.querySelector(".vss-form input:not([type=file])"); if (i) i.focus(); }
+        });
+      });
+      // A sample message: open the chat and send it, the way a customer would.
+      document.querySelectorAll("[data-say]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var p = openChat();
+          if (!p) return;
+          var form = p.querySelector(".vss-form"), input = form.querySelector("input:not([type=file])");
+          input.value = b.getAttribute("data-say");
+          if (form.requestSubmit) form.requestSubmit(); else form.querySelector("button[type=submit]").click();
+        });
+      });
     })();
   </script>
 </body>

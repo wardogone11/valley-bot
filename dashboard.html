@@ -276,7 +276,8 @@
        ["After hours", t.afterHours, p.afterHours], ["Emergencies", t.emergencies, p.emergencies],
        ["Replies sent", t.answered, p.answered], ["By text", t.texts, p.texts],
        ["On the website", t.website, p.website], ["Asked for a person", askedT, askedP]
-      ].forEach(function (s) {
+      ].concat((t.missedCalls || p.missedCalls) ? [["Missed calls texted back", t.missedCalls || 0, p.missedCalls || 0]] : [])
+      .forEach(function (s) {
         var c = el("div", "stat");
         c.style.cursor = "default";
         c.appendChild(el("b", null, String(s[1])));
@@ -333,7 +334,8 @@
         map.rel = "noopener";
         meta.appendChild(map);
       }
-      meta.appendChild(el("span", null, (l.channel === "web" ? "Website chat" : "Text") + " · " + ago(l.updated_at)));
+      var how = l.channel === "web" ? "Website chat" : l.source === "missed_call" ? "Missed call, texted back" : "Text";
+      meta.appendChild(el("span", null, how + " · " + ago(l.updated_at)));
       if (me.admin) meta.appendChild(el("span", null, l.business_name));
       s.appendChild(meta);
       d.appendChild(s);
