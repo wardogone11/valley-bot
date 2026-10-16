@@ -56,6 +56,11 @@
     .settings textarea, .settings input[type=email], .settings input[type=tel], .settings input[type=url], .settings input[type=password] { width: 100%; box-sizing: border-box; font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
     .save { margin-top: 18px; background: var(--brand); color: #fff; border: 0; border-radius: 8px; padding: 10px 22px; font: inherit; font-weight: 600; cursor: pointer; }
     .save:disabled { opacity: .6; }
+    .booked { color: var(--green); font-weight: 700; }
+    .bookrow { display: flex; gap: 6px; align-items: center; }
+    .bookrow input { width: 110px; font: inherit; font-size: 14px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
+    .bookrow button { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 8px 12px; font: inherit; font-size: 14px; cursor: pointer; }
+    .big.money b { font-size: 30px; color: var(--green); }
     .share { margin-top: 16px; }
     .share textarea { width: 100%; box-sizing: border-box; font: 13px/1.4 ui-monospace, Consolas, monospace; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); resize: none; }
     .qr { background: #fff; padding: 12px; display: inline-block; border-radius: 10px; border: 1px solid var(--line); margin: 6px 0; }
@@ -155,6 +160,8 @@
       "Morning reminder": "Recordatorio en la mañana", "Each morning, get a short list of customers still waiting on a call back.": "Cada mañana reciba una lista corta de los clientes que siguen esperando su llamada.",
       "Ask us to change these.": "Pídanos cambiarlos.",
       "Monday results email": "Correo de resultados los lunes",
+      "Booked a job": "Trabajo agendado", "Change job amount": "Cambiar el monto", "Not booked": "No se agendó",
+      "Job amount in dollars": "Monto del trabajo en dólares", "Jobs booked": "Trabajos agendados",
       "Share your chat": "Comparta su chat", "Copy": "Copiar", "Copied": "Copiado", "Your chat link": "Su enlace de chat",
       "QR code": "Código QR", "Download QR code": "Descargar código QR",
       "Put the link on Facebook, Google and your invoices. Print the QR code on your truck, cards and door hangers.":
@@ -479,7 +486,7 @@
         var row = el("div", "reply");
         var out = el("textarea");
         out.readOnly = true;
-        out.rows = value.length > 120 ? 3 : 1;
+        out.rows = value.length > 120 ? 4 : 2;
         out.value = value;
         var copy = el("button", null, "Copy");
         copy.type = "button";
@@ -549,6 +556,14 @@
       var t = results.thisWeek, p = results.lastWeek;
 
       var big = el("div", "big");
+      if (t.booked || p.booked) {
+        var cash = el("div", "big money");
+        cash.appendChild(txt("b", null, money(t.bookedValue)));
+        cash.appendChild(txt("span", null, lang === "es"
+          ? " en " + t.booked + (t.booked === 1 ? " trabajo agendado" : " trabajos agendados") + " en los últimos 7 días (la semana anterior: " + money(p.bookedValue) + ")."
+          : " in " + t.booked + (t.booked === 1 ? " booked job" : " booked jobs") + " in the last 7 days (the week before: " + money(p.bookedValue) + ")."));
+        app.appendChild(cash);
+      }
       big.appendChild(document.createTextNode(lang === "es"
         ? "En los últimos 7 días, Valle Listo habló con " + t.leads + (t.leads === 1 ? " cliente nuevo" : " clientes nuevos") + ". " +
           t.afterHours + " escribieron fuera de horario, cuando nadie estaba para contestar. " +
@@ -568,7 +583,7 @@
       var askedT = Math.max(0, t.handedOff - t.emergencies), askedP = Math.max(0, p.handedOff - p.emergencies);
       [["New customers", t.leads, p.leads], ["Ready to schedule", t.ready, p.ready],
        ["After hours", t.afterHours, p.afterHours], ["Emergencies", t.emergencies, p.emergencies],
-       ["Replies sent", t.answered, p.answered], ["By text", t.texts, p.texts],
+       ["Jobs booked", t.booked || 0, p.booked || 0], ["Replies sent", t.answered, p.answered], ["By text", t.texts, p.texts],
        ["On the website", t.website, p.website], ["Asked for a person", askedT, askedP]
       ].concat((t.messenger || p.messenger) ? [["On Facebook Messenger", t.messenger || 0, p.messenger || 0]] : [])
       .concat((t.missedCalls || p.missedCalls) ? [["Missed calls texted back", t.missedCalls || 0, p.missedCalls || 0]] : [])
@@ -634,6 +649,7 @@
         : l.source === "missed_call" ? "Missed call, texted back" : "Text";
       meta.appendChild(txt("span", null, T(how) + " · " + ago(l.updated_at)));
       if (me.admin) meta.appendChild(txt("span", null, l.business_name));
+      if (l.booked_at) meta.appendChild(txt("span", "booked", (lang === "es" ? "Trabajo agendado " : "Booked job ") + money(l.booked_amount)));
       s.appendChild(meta);
       d.appendChild(s);
 
@@ -646,6 +662,36 @@
           .catch(function () { mark.disabled = false; mark.textContent = T("Couldn't save, try again"); });
       };
       actions.appendChild(mark);
+      // Booked job and what it is worth, for the money total on Results.
+      if (!l.not_a_fit) {
+        var book = el("button", null, l.booked_at ? "Change job amount" : "Booked a job");
+        book.onclick = function () {
+          var row = el("form", "bookrow");
+          var amt = el("input");
+          amt.type = "text"; amt.inputMode = "decimal"; amt.placeholder = "$ 450";
+          amt.value = l.booked_at ? String(Number(l.booked_amount)) : "";
+          amt.setAttribute("aria-label", T("Job amount in dollars"));
+          var ok = el("button", null, "Save");
+          ok.type = "submit";
+          row.appendChild(amt); row.appendChild(ok);
+          if (l.booked_at) {
+            var undo = el("button", null, "Not booked");
+            undo.type = "button";
+            undo.onclick = function () { saveBooked(null); };
+            row.appendChild(undo);
+          }
+          function saveBooked(value) {
+            ok.disabled = true;
+            call({ businessId: l.business_id, conversationId: l.phone, action: "booked", amount: value })
+              .then(refresh)
+              .catch(function () { ok.disabled = false; ok.textContent = T("Couldn't save, try again"); });
+          }
+          row.onsubmit = function (e) { e.preventDefault(); saveBooked(amt.value); };
+          book.replaceWith(row);
+          amt.focus();
+        };
+        actions.appendChild(book);
+      }
       // Texts the shop sends with one button. Two taps, so a stray tap never texts a customer.
       function textButton(label, armedLabel, action, sentLabel, alreadyLabel) {
         var b = el("button", null, label);
@@ -786,6 +832,11 @@
       document.body.appendChild(a);
       a.click();
       setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    }
+
+    function money(v) {
+      var n = Number(v) || 0;
+      return "$" + n.toLocaleString("en-US", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
     }
 
     function prettyPhone(p) {
