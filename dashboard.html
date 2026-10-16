@@ -41,10 +41,9 @@
     .b-ready { color: var(--green); background: var(--green-bg); }
     .b-chatting, .b-done, .b-notfit { color: var(--muted); background: var(--gray-bg); }
     .lead.done { opacity: .7; }
-    .actions { padding: 0 16px 14px; }
+    .actions { padding: 0 16px 14px; display: flex; flex-wrap: wrap; gap: 8px; }
     .pick { margin: 0 0 14px; padding: 9px 12px; font: inherit; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
     .actions button { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 8px 14px; font: inherit; font-size: 14px; cursor: pointer; }
-    .actions button + button { margin-left: 8px; }
     .issue { margin: 6px 0 4px; }
     .meta { color: var(--muted); font-size: 14px; display: flex; gap: 14px; flex-wrap: wrap; }
     .meta a { color: var(--brand); font-weight: 600; text-decoration: none; }
@@ -350,24 +349,32 @@
           .catch(function () { mark.disabled = false; mark.textContent = "Couldn't save, try again"; });
       };
       actions.appendChild(mark);
+      // Texts the shop sends with one button. Two taps, so a stray tap never texts a customer.
+      function textButton(label, armedLabel, action, sentLabel, alreadyLabel) {
+        var b = el("button", null, label);
+        var armed = false;
+        b.onclick = function () {
+          if (!armed) { armed = true; b.textContent = armedLabel; return; }
+          b.disabled = true;
+          b.textContent = "Sending…";
+          call({ businessId: l.business_id, conversationId: l.phone, action: action }).then(function (r) {
+            var said = { sent: sentLabel, already_sent: alreadyLabel, opted_out: "They opted out of texts",
+              no_number: "No number to text", not_a_fit: "Not a job you do", failed: "Couldn't send, try again" };
+            b.textContent = said[r.outcome] || "This is turned off";
+            if (r.outcome === "failed") { b.disabled = false; armed = false; }
+          }).catch(function () { b.disabled = false; armed = false; b.textContent = "Couldn't send, try again"; });
+        };
+        return b;
+      }
+      // Tech on the way: for real jobs that aren't marked done yet.
+      if (!l.not_a_fit && phone && !l.closed_at && (l.status === "complete" || l.status === "handed_off")) {
+        actions.appendChild(textButton(l.on_the_way_at ? "On the way sent " + ago(l.on_the_way_at) + ", send again" : "Tech on the way",
+          "Tap again to text them", "on_the_way", "On the way text sent", "Sent less than 30 min ago"));
+      }
       // Review requests: only for finished jobs, once per customer, and only when the shop turned them on.
       if (l.reviews_on && !l.not_a_fit && phone && (l.status === "complete" || l.closed_at)) {
-        var review = el("button", null, l.review_requested_at ? "Review asked " + ago(l.review_requested_at) : "Ask for a review");
-        review.disabled = Boolean(l.review_requested_at);
-        var armed = false;
-        review.onclick = function () {
-          // Two taps, so a stray tap never texts a customer.
-          if (!armed) { armed = true; review.textContent = "Tap again to text the review link"; return; }
-          review.disabled = true;
-          review.textContent = "Sending…";
-          call({ businessId: l.business_id, conversationId: l.phone, action: "review" }).then(function (r) {
-            var said = { sent: "Review link sent", already_sent: "Already asked", opted_out: "They opted out of texts",
-              no_number: "No number to text", not_a_fit: "Not a job you do", failed: "Couldn't send, try again" };
-            review.textContent = said[r.outcome] || "Review requests are off";
-            if (r.outcome === "failed") { review.disabled = false; armed = false; }
-            if (r.outcome === "sent") l.review_requested_at = new Date().toISOString();
-          }).catch(function () { review.disabled = false; armed = false; review.textContent = "Couldn't send, try again"; });
-        };
+        var review = textButton("Ask for a review", "Tap again to text the review link", "review", "Review link sent", "Already asked");
+        if (l.review_requested_at) { review.textContent = "Review asked " + ago(l.review_requested_at); review.disabled = true; }
         actions.appendChild(review);
       }
       d.appendChild(actions);
