@@ -117,6 +117,7 @@
     var view = "leads", results = null, resultsFor = null, loadingResults = false;
     var settings = null, settingsFor = null, loadingSettings = false, settingsNote = "";
     var openLead = null, drafts = {}, pendingRender = false;
+    var signups = null, loadingSignups = false, newShop = null;
     // Dashboard words in English or Spanish. Customer messages, names and addresses are never translated.
     var LANG_STORE = "vss-dashboard-lang";
     var lang = "en";
@@ -160,6 +161,8 @@
       "Morning reminder": "Recordatorio en la mañana", "Each morning, get a short list of customers still waiting on a call back.": "Cada mañana reciba una lista corta de los clientes que siguen esperando su llamada.",
       "Ask us to change these.": "Pídanos cambiarlos.",
       "Monday results email": "Correo de resultados los lunes",
+      "Signups": "Registros", "New": "Nuevo", "Approved": "Aprobado", "Declined": "Rechazado", "Approve": "Aprobar", "Decline": "Rechazar",
+      "No signups yet.": "Todavía no hay registros.", "Loading signups…": "Cargando registros…", "Done": "Terminado",
       "Also send alerts to": "También mandar avisos a",
       "Optional. Up to 3 more cell numbers and 3 more emails, separated by commas. Each text alert costs about a cent.":
         "Opcional. Hasta 3 celulares y 3 correos más, separados por comas. Cada aviso por texto cuesta como un centavo.",
@@ -297,6 +300,7 @@
       app.appendChild(viewTabs());
       if (view === "results") { renderResults(); return; }
       if (view === "settings") { renderSettings(); return; }
+      if (view === "signups") { renderSignups(); return; }
 
       var stats = el("div", "stats");
       [["needsCall", counts.needsCall, "Need a call now", counts.needsCall > 0],
@@ -325,7 +329,7 @@
 
     function viewTabs() {
       var tabs = el("div", "tabs");
-      [["leads", "Leads"], ["results", "Results"], ["settings", "Settings"]].forEach(function (t) {
+      [["leads", "Leads"], ["results", "Results"], ["settings", "Settings"]].concat(me.admin ? [["signups", "Signups"]] : []).forEach(function (t) {
         var b = el("button", view === t[0] ? "on" : "", t[1]);
         b.onclick = function () { view = t[0]; render(); };
         tabs.appendChild(b);
@@ -547,6 +551,80 @@
         document.head.appendChild(sc);
       }
       qrLoading.push(done);
+    }
+
+    // Admin: shops that asked for the free trial on the signup page. Approving one creates the
+    // shop; its dashboard password is shown once, to hand to the owner.
+    function renderSignups() {
+      if (newShop) {
+        var made = el("div", "settings");
+        made.appendChild(txt("h2", null, newShop.name + " is set up"));
+        made.appendChild(el("p", "fhint", "Give the owner this dashboard password. It is shown only now."));
+        var keyOut = el("textarea"); keyOut.readOnly = true; keyOut.rows = 1; keyOut.value = newShop.key;
+        keyOut.style.width = "100%";
+        made.appendChild(keyOut);
+        made.appendChild(el("p", "fhint", "Next: open Settings for this shop to add their hours and info, then share their chat link."));
+        var okBtn = el("button", "save", "Done");
+        okBtn.onclick = function () { newShop = null; signups = null; refresh(); };
+        made.appendChild(okBtn);
+        app.appendChild(made);
+        return;
+      }
+      if (!signups) {
+        app.appendChild(el("p", "empty", "Loading signups…"));
+        if (!loadingSignups) {
+          loadingSignups = true;
+          call({ action: "signups" }).then(function (d) { signups = d.signups; })
+            .catch(function () { signups = []; })
+            .then(function () { loadingSignups = false; render(); });
+        }
+        return;
+      }
+      if (!signups.length) { app.appendChild(el("p", "empty", "No signups yet.")); return; }
+      signups.forEach(function (r) {
+        var c = el("div", "lead");
+        c.style.padding = "14px 16px";
+        var top = el("div", "top");
+        top.appendChild(txt("span", "name", r.shop_name));
+        top.appendChild(txt("span", "badge " + (r.status === "new" ? "b-ready" : "b-done"), r.status === "new" ? T("New") : r.status === "approved" ? T("Approved") : T("Declined")));
+        c.appendChild(top);
+        c.appendChild(txt("div", "issue", r.owner_name + " · " + r.trades + " · " + r.city));
+        var meta = el("div", "meta");
+        var tel = txt("a", null, prettyPhone(r.phone)); tel.href = "tel:" + r.phone; meta.appendChild(tel);
+        if (r.email) { var em = txt("a", null, r.email); em.href = "mailto:" + r.email; meta.appendChild(em); }
+        if (r.website) meta.appendChild(txt("span", null, r.website));
+        meta.appendChild(txt("span", null, ago(r.created_at) + (r.language === "es" ? " · Español" : "")));
+        c.appendChild(meta);
+        if (r.notes) c.appendChild(txt("div", "issue", r.notes));
+        if (r.status === "new") {
+          var row = el("form", "bookrow");
+          row.style.marginTop = "10px";
+          var slug = el("input"); slug.type = "text"; slug.style.width = "190px";
+          slug.value = r.shop_name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+          slug.setAttribute("aria-label", "Shop id");
+          var area = el("input"); area.type = "text"; area.style.width = "220px"; area.placeholder = r.city + " and nearby towns";
+          area.setAttribute("aria-label", "Service area");
+          var yes = el("button", null, "Approve"); yes.type = "submit";
+          var no = el("button", null, "Decline"); no.type = "button";
+          var msg = el("span", "fhint");
+          row.appendChild(slug); row.appendChild(area); row.appendChild(yes); row.appendChild(no); row.appendChild(msg);
+          row.onsubmit = function (e) {
+            e.preventDefault();
+            yes.disabled = true;
+            fetch(API, { method: "POST", headers: { "Content-Type": "application/json", "X-Dashboard-Key": key },
+              body: JSON.stringify({ action: "approve_signup", id: r.id, businessId: slug.value.trim(), service_area: area.value }) })
+              .then(function (res) { return res.json().then(function (d) { if (!res.ok) throw new Error(d.error || "Couldn't approve"); return d; }); })
+              .then(function (d) { newShop = { name: r.shop_name, key: d.dashboardKey }; render(); })
+              .catch(function (err) { yes.disabled = false; msg.textContent = err.message; });
+          };
+          no.onclick = function () {
+            no.disabled = true;
+            call({ action: "decline_signup", id: r.id }).then(function () { signups = null; render(); });
+          };
+          c.appendChild(row);
+        }
+        app.appendChild(c);
+      });
     }
 
     function renderResults() {

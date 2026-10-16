@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Start free | Valle Listo</title>
+<meta name="description" content="Start your 14 day free trial of Valle Listo. No card needed.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@700;900&family=Red+Hat+Text:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --night: #05211c; --night-ink: #f1faf6; --night-muted: #a6c7ba; --sun: #ffb21f; --sun-ink: #241500;
+    --paper: #f4f2ec; --card: #ffffff; --ink: #0d211b; --muted: #536159; --line: #dcdcd2; --brand: #0b6e4f; --ruby: #c62f3c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.5 "Red Hat Text", system-ui, sans-serif; }
+  header { background: var(--night); color: var(--night-ink); padding: 28px 16px 36px; }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .brand { color: var(--night-ink); text-decoration: none; font: 900 22px "Red Hat Display", sans-serif; }
+  .brand span { color: #7be0b8; }
+  .lang { background: none; border: 1px solid #1d4a3d; color: var(--night-ink); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 15px; cursor: pointer; }
+  h1 { font: 900 clamp(30px, 6vw, 42px)/1.08 "Red Hat Display", sans-serif; margin: 26px 0 10px; letter-spacing: -0.5px; }
+  .lead { color: var(--night-muted); margin: 0; }
+  .pill { display: inline-block; background: var(--sun); color: var(--sun-ink); font-weight: 700; border-radius: 999px; padding: 6px 14px; margin-top: 16px; font-size: 15px; }
+  main { padding: 0 16px 48px; }
+  form { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; margin-top: -18px; }
+  label { display: block; margin-top: 16px; font-weight: 700; }
+  label small { display: block; font-weight: 400; color: var(--muted); font-size: 14px; }
+  input[type=text], input[type=tel], input[type=email], input[type=url], textarea {
+    width: 100%; margin-top: 6px; font: inherit; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: #fbfbf8; color: var(--ink);
+  }
+  input:focus, textarea:focus { outline: 2px solid var(--brand); outline-offset: 1px; border-color: var(--brand); }
+  .checks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .checks label { margin: 0; font-weight: 500; display: flex; gap: 8px; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; cursor: pointer; }
+  .checks input { width: 18px; height: 18px; accent-color: var(--brand); }
+  .trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  button.go { margin-top: 22px; width: 100%; background: var(--brand); color: #fff; border: 0; border-radius: 12px; padding: 15px; font: 700 18px "Red Hat Text", sans-serif; cursor: pointer; }
+  button.go:disabled { opacity: .6; }
+  .err { color: var(--ruby); min-height: 22px; margin-top: 10px; font-size: 15px; }
+  .fine { color: var(--muted); font-size: 14px; margin-top: 14px; }
+  .fine a { color: var(--brand); }
+  .done { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 26px 22px; margin-top: -18px; }
+  .done h2 { font: 900 26px "Red Hat Display", sans-serif; margin: 0 0 8px; color: var(--brand); }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <a class="brand" href="index.html">Valle <span>Listo</span></a>
+      <button class="lang" type="button" id="lang">Español</button>
+    </div>
+    <h1 data-t="title">Start your free trial</h1>
+    <p class="lead" data-t="lead">Valle Listo answers your customers by text and on your website, in English and Spanish, day or night, and hands you jobs ready to schedule.</p>
+    <span class="pill" data-t="pill">14 days free. No card needed.</span>
+  </div>
+</header>
+<main>
+  <div class="wrap">
+    <form id="form" novalidate>
+      <label><span data-t="shop">Business name</span><input type="text" name="shop_name" maxlength="80" required autocomplete="organization"></label>
+      <label><span data-t="owner">Your name</span><input type="text" name="owner_name" maxlength="80" required autocomplete="name"></label>
+      <label><span data-t="trades">What work do you do</span>
+        <div class="checks">
+          <label><input type="checkbox" name="trade" value="AC and heating"> <span data-t="t_ac">AC and heating</span></label>
+          <label><input type="checkbox" name="trade" value="plumbing"> <span data-t="t_pl">Plumbing</span></label>
+          <label><input type="checkbox" name="trade" value="electrical"> <span data-t="t_el">Electrical</span></label>
+        </div>
+      </label>
+      <label><span data-t="other">Other work (optional)</span><input type="text" name="other_trade" maxlength="60"></label>
+      <label><span data-t="city">City</span><small data-t="city_hint">Where your shop is, like Harlingen or McAllen</small><input type="text" name="city" maxlength="80" required autocomplete="address-level2"></label>
+      <label><span data-t="phone">Cell phone</span><small data-t="phone_hint">We call you here to set it up. New customer alerts can go here too.</small><input type="tel" name="phone" maxlength="20" required autocomplete="tel"></label>
+      <label><span data-t="email">Email (optional)</span><input type="email" name="email" maxlength="120" autocomplete="email"></label>
+      <label><span data-t="site">Website or Facebook page (optional)</span><input type="text" name="website" maxlength="200"></label>
+      <label><span data-t="notes">Anything we should know (optional)</span><textarea name="notes" rows="3" maxlength="600"></textarea></label>
+      <div class="trap" aria-hidden="true"><label>Company site<input type="text" name="company_site" tabindex="-1" autocomplete="off"></label></div>
+      <button class="go" type="submit" data-t="send">Start my free trial</button>
+      <div class="err" id="err" role="alert"></div>
+      <p class="fine"><span data-t="fine">After the trial it is $175 a month. Cancel any time.</span> <a href="terms.html" data-t="terms">Terms</a> · <a href="privacy.html" data-t="privacy">Privacy</a></p>
+    </form>
+    <div class="done" id="done" hidden>
+      <h2 data-t="thanks">Thanks, you're in line!</h2>
+      <p data-t="next">We will call you to set up your account and show you how it works. Want to see it now? Text 956 247 0503 like you are a customer.</p>
+    </div>
+  </div>
+</main>
+<script>
+  var ES = {
+    title: "Empiece su prueba gratis",
+    lead: "Valle Listo le contesta a sus clientes por texto y en su página web, en español e inglés, de día o de noche, y le deja trabajos listos para agendar.",
+    pill: "14 días gratis. Sin tarjeta.", shop: "Nombre del negocio", owner: "Su nombre", trades: "Qué tipo de trabajo hace",
+    t_ac: "Aire acondicionado y calefacción", t_pl: "Plomería", t_el: "Electricidad", other: "Otro trabajo (opcional)",
+    city: "Ciudad", city_hint: "Dónde está su negocio, como Harlingen o McAllen", phone: "Celular",
+    phone_hint: "Le llamamos aquí para configurarlo. Los avisos de clientes nuevos también pueden llegar aquí.",
+    email: "Correo (opcional)", site: "Página web o de Facebook (opcional)", notes: "Algo que debamos saber (opcional)",
+    send: "Empezar mi prueba gratis", fine: "Después de la prueba son $175 al mes. Cancele cuando quiera.",
+    terms: "Términos", privacy: "Privacidad", thanks: "¡Gracias, ya está en la lista!",
+    next: "Le llamamos para configurar su cuenta y enseñarle cómo funciona. ¿Lo quiere ver ahorita? Mande un texto al 956 247 0503 como si fuera cliente."
+  };
+  var ERR = {
+    en: { missing: "Please fill in your business name, your name, your work and your city.", phone: "Please enter a 10 digit cell number.",
+          email: "That email doesn't look right.", busy: "Lots of signups right now. Please try again in a little while.",
+          server: "Something went wrong. Please try again, or text 956 247 0503." },
+    es: { missing: "Por favor escriba el nombre del negocio, su nombre, su trabajo y su ciudad.", phone: "Por favor escriba un celular de 10 dígitos.",
+          email: "Ese correo no se ve bien.", busy: "Hay muchos registros ahorita. Intente otra vez en un rato.",
+          server: "Algo salió mal. Intente otra vez, o mande un texto al 956 247 0503." }
+  };
+  var EN = {};
+  document.querySelectorAll("[data-t]").forEach(function (n) { EN[n.getAttribute("data-t")] = n.textContent; });
+  var lang = (new URLSearchParams(location.search).get("lang") || (navigator.language || "")).slice(0, 2) === "es" ? "es" : "en";
+  function apply() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-t]").forEach(function (n) {
+      var k = n.getAttribute("data-t");
+      n.textContent = lang === "es" ? ES[k] || EN[k] : EN[k];
+    });
+    document.getElementById("lang").textContent = lang === "es" ? "English" : "Español";
+  }
+  document.getElementById("lang").onclick = function () { lang = lang === "es" ? "en" : "es"; apply(); };
+  apply();
+
+  var form = document.getElementById("form"), err = document.getElementById("err");
+  form.onsubmit = function (e) {
+    e.preventDefault();
+    var f = form.elements;
+    var trades = Array.prototype.filter.call(form.querySelectorAll("input[name=trade]"), function (c) { return c.checked; })
+      .map(function (c) { return c.value; });
+    if (f.other_trade.value.trim()) trades.push(f.other_trade.value.trim());
+    var body = {
+      shop_name: f.shop_name.value, owner_name: f.owner_name.value, trades: trades.join(", "), city: f.city.value,
+      phone: f.phone.value, email: f.email.value, website: f.website.value, notes: f.notes.value,
+      company_site: f.company_site.value, language: lang
+    };
+    if (!body.shop_name.trim() || !body.owner_name.trim() || !body.trades || !body.city.trim()) { err.textContent = ERR[lang].missing; return; }
+    if (body.phone.replace(/\D/g, "").replace(/^1/, "").length !== 10) { err.textContent = ERR[lang].phone; return; }
+    var go = form.querySelector(".go");
+    go.disabled = true;
+    err.textContent = "";
+    fetch("https://hlzmldcebgoeyxmrefcw.supabase.co/functions/v1/signup", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d.ok) { form.hidden = true; document.getElementById("done").hidden = false; window.scrollTo(0, 0); return; }
+      err.textContent = ERR[lang][d.error] || ERR[lang].server;
+      go.disabled = false;
+    }).catch(function () { err.textContent = ERR[lang].server; go.disabled = false; });
+  };
+</script>
+</body>
+</html>
