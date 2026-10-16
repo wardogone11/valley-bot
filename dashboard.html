@@ -160,6 +160,9 @@
       "Morning reminder": "Recordatorio en la mañana", "Each morning, get a short list of customers still waiting on a call back.": "Cada mañana reciba una lista corta de los clientes que siguen esperando su llamada.",
       "Ask us to change these.": "Pídanos cambiarlos.",
       "Monday results email": "Correo de resultados los lunes",
+      "Also send alerts to": "También mandar avisos a",
+      "Optional. Up to 3 more cell numbers and 3 more emails, separated by commas. Each text alert costs about a cent.":
+        "Opcional. Hasta 3 celulares y 3 correos más, separados por comas. Cada aviso por texto cuesta como un centavo.",
       "Booked a job": "Trabajo agendado", "Change job amount": "Cambiar el monto", "Not booked": "No se agendó",
       "Job amount in dollars": "Monto del trabajo en dólares", "Jobs booked": "Trabajos agendados",
       "Share your chat": "Comparta su chat", "Copy": "Copiar", "Copied": "Copiado", "Your chat link": "Su enlace de chat",
@@ -418,6 +421,11 @@
       var phone = el("input"); phone.type = "tel"; phone.value = s.dispatcher_phone ? prettyPhone(s.dispatcher_phone) : ""; phone.autocomplete = "tel";
       field("Alert text number", "Emergencies and new customers are texted to this cell phone.", phone);
 
+      var extra = el("textarea");
+      extra.rows = 2;
+      extra.value = (s.extra_alert_phones || []).map(prettyPhone).concat(s.extra_alert_emails || []).join(", ");
+      field("Also send alerts to", "Optional. Up to 3 more cell numbers and 3 more emails, separated by commas. Each text alert costs about a cent.", extra);
+
       var reminder = check("Morning reminder", "Each morning, get a short list of customers still waiting on a call back.", s.daily_reminder);
       var weekly = check("Monday results email", "Every Monday, an email with how many customers Valle Listo caught last week.", s.weekly_summary);
 
@@ -447,7 +455,7 @@
         e.preventDefault();
         save.disabled = true;
         note.textContent = T("Saving…");
-        var fields = { facts: facts.value, alert_email: email.value, dispatcher_phone: phone.value, daily_reminder: reminder.checked, weekly_summary: weekly.checked };
+        var fields = { facts: facts.value, alert_email: email.value, dispatcher_phone: phone.value, extra_alerts: extra.value, daily_reminder: reminder.checked, weekly_summary: weekly.checked };
         if (me.admin) {
           fields.missed_call_text = missed.checked; fields.review_requests = reviews.checked; fields.review_link = link.value;
           fields.messenger_page_id = pageId.value; fields.messenger_page_token = pageToken.value;
